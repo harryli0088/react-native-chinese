@@ -181,7 +181,15 @@ class DrawScreen extends React.Component {
               <G>
                 {this.state.points.map((array,i) => { //this renders the strokes that the user draws
                   if(array.length > 1) {
-                    return <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth={strokeWidth}/>
+                    return (
+                      <Path
+                        key={i}
+                        d={"M"+array.map(p => p.x+" "+p.y).join("L")}
+                        stroke="white"
+                        strokeWidth={strokeWidth}
+                        strokeLinejoin="round"
+                      />
+                    )
                   }
                   else if(array.length > 0) {
                     return <Circle key={i} cx={array[0].x} cy={array[0].y} r={strokeWidth/2} fill="white"/>
