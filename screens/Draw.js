@@ -24,8 +24,9 @@ const strokeWidth = 10
 const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
   simplified: 1,
-  pinyin: 2,
-  english: 3
+  pinyinNumber: 2,
+  pinyinTone: 3,
+  english: 4
 }
 
 export default class DrawScreen extends React.Component {
@@ -109,14 +110,9 @@ export default class DrawScreen extends React.Component {
 
   clearPoints = () => this.setState({points: []})
 
+  undoPoint = () => this.setState({points: this.state.points.slice(0, this.state.points.length-1)})
 
-  getText = chineseSet => {
-    if(this.state.status === "loading") {
-      return "Loading..."
-    }
 
-    return "You are writing the set " + chineseSet
-  }
 
   // boldCurrentCharacter = (text, currentCharacter) => {
   //   const split = text.split(currentCharacter).map(str => <Text>{str}</Text>)
@@ -151,10 +147,10 @@ export default class DrawScreen extends React.Component {
 
   getNextButton = chineseSet => {
     if(chineseSet.length-1 <= this.state.characterIndex) {
-      return <Button title="Next Set" onPress={this.getNewSet}/>
+      return <Button title="Next Set >" onPress={this.getNewSet}/>
     }
 
-    return <Button title="Next Character" onPress={this.getNextCharacter}/>
+    return <Button title="Next Character >" onPress={this.getNextCharacter}/>
   }
 
 
@@ -162,24 +158,12 @@ export default class DrawScreen extends React.Component {
     if(this.state.status === "done") {
       const currentSet = this.getCurrentSet()
       const chineseSet = currentSet[this.state.traditionalOrSimplified]
-      const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyin]
+      const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
       const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
       const currentCharacter = this.getCurrentCharacter(chineseSet)
 
       return (
         <View style={styles.container}>
-          <Button
-            onPress={this.clearPoints}
-            title="Clear"
-          />
-          <Button
-            onPress={this.toggleTraditionalOrSimplified}
-            title={"Switch to " + this.getSwitchButtonText()}
-          />
-          <View>
-            <Text>{this.getText(chineseSet)}, {pinyin}</Text>
-            {english.map(e => <Text>{e}</Text>)}
-          </View>
           <PanGestureHandler onGestureEvent={this.handleGesture}>
             <Svg width={dimensions.window.width} height={dimensions.window.width}>
               <Rect //this is a dummy background
@@ -190,10 +174,10 @@ export default class DrawScreen extends React.Component {
               <SvgText //this is the character the user should be writing
                 x={dimensions.window.width/2}
                 y={dimensions.window.width/2}
-                dy="35%"
+                dy="30%"
                 textAnchor="middle"
                 fill="#777"
-                fontSize={dimensions.window.width}>
+                fontSize={0.8*dimensions.window.width}>
                 {currentCharacter}
               </SvgText>
               <G>
@@ -216,7 +200,27 @@ export default class DrawScreen extends React.Component {
           </PanGestureHandler>
 
           <View>
+            <Text style={[styles.centeredText, styles.chineseText]}>{chineseSet}</Text>
+            <Text style={[styles.centeredText, styles.chineseText]}>{pinyin}</Text>
+            {english.map((e,i) =>
+              <Text key={i}  style={styles.centeredText}>- {e}</Text>
+            )}
+          </View>
+
+          <View>
             {this.getNextButton(chineseSet)}
+            <Button
+              onPress={this.clearPoints}
+              title="Clear"
+            />
+            <Button
+              onPress={this.undoPoint}
+              title="Undo"
+            />
+            <Button
+              onPress={this.toggleTraditionalOrSimplified}
+              title={"Switch to " + this.getSwitchButtonText()}
+            />
           </View>
         </View>
       );
@@ -236,86 +240,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  developmentModeText: {
-    marginBottom: 20,
-    color: 'rgba(0,0,0,0.4)',
-    fontSize: 14,
-    lineHeight: 19,
-    textAlign: 'center',
+  centeredText: {
+    textAlign: "center",
   },
-  contentContainer: {
-    paddingTop: 30,
-  },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  welcomeImage: {
-    width: 100,
-    height: 80,
-    resizeMode: 'contain',
-    marginTop: 3,
-    marginLeft: -10,
-  },
-  getStartedContainer: {
-    alignItems: 'center',
-    marginHorizontal: 50,
-  },
-  homeScreenFilename: {
-    marginVertical: 7,
-  },
-  codeHighlightText: {
-    color: 'rgba(96,100,109, 0.8)',
-  },
-  codeHighlightContainer: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 3,
-    paddingHorizontal: 4,
-  },
-  getStartedText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  tabBarInfoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    ...Platform.select({
-      ios: {
-        shadowColor: 'black',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 20,
-      },
-    }),
-    alignItems: 'center',
-    backgroundColor: '#fbfbfb',
-    paddingVertical: 20,
-  },
-  tabBarInfoText: {
-    fontSize: 17,
-    color: 'rgba(96,100,109, 1)',
-    textAlign: 'center',
-  },
-  navigationFilename: {
-    marginTop: 5,
-  },
-  helpContainer: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  helpLink: {
-    paddingVertical: 15,
-  },
-  helpLinkText: {
-    fontSize: 14,
-    color: '#2e78b7',
-  },
+  chineseText: {
+    fontSize: 20
+  }
 });
