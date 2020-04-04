@@ -4,7 +4,8 @@ import { Button, Image, Platform, StyleSheet, TouchableOpacity, View, Text } fro
 import { ScrollView } from 'react-native-gesture-handler';
 import loadLocalResource from 'react-native-local-resource';
 import { MonoText } from '../components/StyledText';
-
+import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
+import withSettings from "../components/Settings/Settings"
 import  {PanGestureHandler} from 'react-native-gesture-handler'
 
 import chineseOutput from '../data/chineseOutput.txt'
@@ -29,7 +30,7 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
-export default class DrawScreen extends React.Component {
+class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
 
@@ -38,7 +39,6 @@ export default class DrawScreen extends React.Component {
       points: [],
       setIndex: -1,
       characterIndex: 0,
-      traditionalOrSimplified: FIELD_TO_PARSED_INDEX_MAP.traditional
     }
   }
 
@@ -86,9 +86,7 @@ export default class DrawScreen extends React.Component {
 
 
   toggleTraditionalOrSimplified = () => {
-    this.setState({
-      traditionalOrSimplified: this.state.traditionalOrSimplified===FIELD_TO_PARSED_INDEX_MAP.traditional ? FIELD_TO_PARSED_INDEX_MAP.simplified : FIELD_TO_PARSED_INDEX_MAP.traditional
-    })
+    this.props.setSetting("traditionalOrSimplified", this.props.settings.traditionalOrSimplified==="traditional"?"simplified":"traditional")
   }
 
   handlePressIn = e => { //this happens before gesture
@@ -130,19 +128,19 @@ export default class DrawScreen extends React.Component {
   // }
 
   getCurrentCharacter = chineseSet => {
-    if(chineseSet.length > this.state.characterIndex) {
-      return chineseSet[this.state.characterIndex]
+    if(chineseSet.length > this.state.characterIndex) { //if this index is valid
+      return chineseSet[this.state.characterIndex] //return the character
     }
 
-    return ""
+    return "" //else return nothing
   }
 
   getSwitchButtonText = () => {
-    if(this.state.traditionalOrSimplified === FIELD_TO_PARSED_INDEX_MAP.traditional) {
-      return "Simplified"
+    if(this.props.settings.traditionalOrSimplified === "traditional") { //if this is traditional
+      return "Simplified" //show switch to simplified
     }
 
-    return "Traditional"
+    return "Traditional" //else show switch to traditional
   }
 
   getNextButton = chineseSet => {
@@ -156,8 +154,9 @@ export default class DrawScreen extends React.Component {
 
   render() {
     if(this.state.status === "done") {
+      console.log("DRAW", this.props.settings)
       const currentSet = this.getCurrentSet()
-      const chineseSet = currentSet[this.state.traditionalOrSimplified]
+      const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
       const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
       const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
       const currentCharacter = this.getCurrentCharacter(chineseSet)
@@ -233,6 +232,8 @@ export default class DrawScreen extends React.Component {
 DrawScreen.navigationOptions = {
   header: null,
 };
+
+export default withSettings(DrawScreen)
 
 
 const styles = StyleSheet.create({
