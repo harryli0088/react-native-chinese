@@ -22,21 +22,28 @@ export default class DrawScreen extends React.Component {
     super(props)
 
     this.state = {
-      points: []
+      points: [[]]
     }
   }
 
-  handleGesture = e =>{
-    let {
-      nativeEvent
-    } = e
-    console.log(nativeEvent)
+  handlePressIn = e => { //this happens before gesture
+    const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
+    pointsCopy.push([])
     this.setState({
-      points: this.state.points.concat({x:nativeEvent.x, y:nativeEvent.y})
+      points: pointsCopy
+    })
+  }
+
+  handleGesture = e => {
+    const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
+    pointsCopy[pointsCopy.length-1].push({x:e.nativeEvent.x, y:e.nativeEvent.y})
+    this.setState({
+      points: pointsCopy
     })
   }
 
   render() {
+    console.log(this.state.points.length)
     return (
       <View style={styles.container}>
         <Button
@@ -46,19 +53,19 @@ export default class DrawScreen extends React.Component {
           title="Press Me"
         />
         <Text style={{color:"black"}}>Test</Text>
-        <PanGestureHandler onGestureEvent={this.handleGesture}>
-          <Svg width="500" height="500" onPress={e => console.log(e)}>
-            <Rect
-              width={500}
-              height={500}
-              fill="blue"
-              onPress={e => {
-                console.log('onPress rect', e);
-              }}
-            />
-            {this.state.points.length>0 ? <Path d={"M"+this.state.points.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth="5"/> : null}
-          </Svg>
-        </PanGestureHandler>
+          <PanGestureHandler onGestureEvent={this.handleGesture}>
+            <Svg width="500" height="500" onPress={e => console.log(e)}>
+              <Rect
+                width={500}
+                height={500}
+                fill="blue"
+                onPressIn={this.handlePressIn}
+              />
+              {this.state.points.map((array,i) =>
+                array.length>0 ? <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth="5"/> : null
+              )}
+            </Svg>
+          </PanGestureHandler>
 
         <View style={styles.tabBarInfoContainer}>
           <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
