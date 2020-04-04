@@ -154,7 +154,6 @@ class DrawScreen extends React.Component {
 
   render() {
     if(this.state.status === "done") {
-      console.log("DRAW", this.props.settings)
       const currentSet = this.getCurrentSet()
       const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
       const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
