@@ -1,11 +1,14 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Button, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Image, Platform, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
-
+import loadLocalResource from 'react-native-local-resource';
 import { MonoText } from '../components/StyledText';
 
 import  {PanGestureHandler} from 'react-native-gesture-handler'
+
+import chineseOutput from '../data/chineseOutput.txt'
+import dimensions from "../constants/Layout"
 
 import Svg, {
   Circle,
@@ -13,17 +16,77 @@ import Svg, {
   Path,
   Line,
   Rect,
+  Text as SvgText,
 } from 'react-native-svg';
 
-
+const strokeWidth = 10
 
 export default class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
-      points: []
+      status:"loading",
+      points: [],
+      setIndex: -1,
+      characterIndex: 0,
+      traditionalOrSimplified: 0
     }
+  }
+
+  componentDidMount() {
+    this.loadChinese()
+  }
+
+  loadChinese = async () => {
+    this.chinese = await loadLocalResource(chineseOutput).then(content => {
+      return JSON.parse(content);
+    });
+    this.setState({
+      status: "done"
+    })
+    this.getNewSet()
+  }
+
+  getNewSet = () => {
+    const newSetIndex = Math.floor(Math.random()*this.chinese.parsed.length)
+
+    this.setState({
+      setIndex: newSetIndex,
+      characterIndex: 0,
+    })
+    this.clearPoints()
+  }
+
+  getCurrentSet = () => {
+    if(this.chinese && this.chinese.parsed && this.chinese.parsed[this.state.setIndex]) {
+      return this.chinese.parsed[this.state.setIndex][this.state.traditionalOrSimplified]
+    }
+    return ""
+  }
+
+  getNextCharacter = () => {
+    if(this.getCurrentSet().length-1 > this.state.characterIndex) {
+      this.setState({characterIndex: this.state.characterIndex+1})
+    }
+    else {
+      this.getNewSet()
+    }
+    this.clearPoints()
+  }
+
+  getCurrentCharacter = (currentSet) => {
+    if(currentSet.length > this.state.characterIndex) {
+      return currentSet[this.state.characterIndex]
+    }
+
+    return ""
+  }
+
+  toggleTraditionalOrSimplified = () => {
+    this.setState({
+      traditionalOrSimplified: this.state.traditionalOrSimplified===1 ? 0 : 1
+    })
   }
 
   handlePressIn = e => { //this happens before gesture
@@ -43,24 +106,48 @@ export default class DrawScreen extends React.Component {
     })
   }
 
+  clearPoints = () => this.setState({points: []})
+
+
+  getText = (currentSet) => {
+    if(this.state.status === "loading") {
+      return "Loading..."
+    }
+
+    return "You are writing the set " + currentSet
+  }
+
+
   render() {
-    const strokeWidth = 7
+    const currentSet = this.getCurrentSet()
 
     return (
       <View style={styles.container}>
         <Button
-          onPress={e => this.setState({points: []})}
+          onPress={this.clearPoints}
           title="Clear"
         />
+        <View>
+          <Text>{this.getText(currentSet)}</Text>
+        </View>
         <PanGestureHandler onGestureEvent={this.handleGesture}>
-          <Svg width="500" height="500" onPress={e => console.log(e)}>
-            <Rect
-              width={500}
-              height={500}
+          <Svg width={dimensions.window.width} height={dimensions.window.width}>
+            <Rect //this is a dummy background
+              width={dimensions.window.width}
+              height={dimensions.window.width}
               fill="blue"
             />
+            <SvgText //this is the character the user should be writing
+              x={dimensions.window.width/2}
+              y={dimensions.window.width/2}
+              dy="35%"
+              textAnchor="middle"
+              fill="#777"
+              fontSize={dimensions.window.width}>
+              {this.getCurrentCharacter(currentSet)}
+            </SvgText>
             <G>
-              {this.state.points.map((array,i) => {
+              {this.state.points.map((array,i) => { //this renders the strokes that the user draws
                 if(array.length > 1) {
                   return <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth={strokeWidth}/>
                 }
@@ -69,21 +156,18 @@ export default class DrawScreen extends React.Component {
                 }
               })}
             </G>
-            <Rect
-              width={500}
-              height={500}
+            <Rect //this transparent rect handles the on press in event
+              width={dimensions.window.width}
+              height={dimensions.window.width}
               fill="transparent"
               onPressIn={this.handlePressIn}
             />
           </Svg>
         </PanGestureHandler>
 
-        <View style={styles.tabBarInfoContainer}>
-          <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
-
-          <View style={[styles.codeHighlightContainer, styles.navigationFilename]}>
-            <MonoText style={styles.codeHighlightText}>navigation/BottomTabNavigator.js</MonoText>
-          </View>
+        <View>
+          <Button title="Next Character" onPress={this.getNextCharacter}/>
+          <Button title="Next Set" onPress={this.getNewSet}/>
         </View>
       </View>
     );

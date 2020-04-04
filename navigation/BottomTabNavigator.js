@@ -7,7 +7,7 @@ import LinksScreen from '../screens/LinksScreen';
 import Draw from '../screens/Draw';
 
 const BottomTab = createBottomTabNavigator();
-const INITIAL_ROUTE_NAME = 'Home';
+const INITIAL_ROUTE_NAME = 'Draw';
 
 export default function BottomTabNavigator({ navigation, route }) {
   // Set the header title on the parent stack navigator depending on the
@@ -17,6 +17,14 @@ export default function BottomTabNavigator({ navigation, route }) {
 
   return (
     <BottomTab.Navigator initialRouteName={INITIAL_ROUTE_NAME}>
+      <BottomTab.Screen
+        name="Draw"
+        component={Draw}
+        options={{
+          title: 'Resources',
+          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-leaf" />,
+        }}
+      />
       <BottomTab.Screen
         name="Home"
         component={HomeScreen}
@@ -31,14 +39,6 @@ export default function BottomTabNavigator({ navigation, route }) {
         options={{
           title: 'Resources',
           tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-book" />,
-        }}
-      />
-      <BottomTab.Screen
-        name="Draw"
-        component={Draw}
-        options={{
-          title: 'Resources',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-leaf" />,
         }}
       />
     </BottomTab.Navigator>
