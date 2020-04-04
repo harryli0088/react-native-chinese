@@ -4,7 +4,8 @@ import * as React from 'react';
 import TabBarIcon from '../components/TabBarIcon';
 import HomeScreen from '../screens/HomeScreen';
 import LinksScreen from '../screens/LinksScreen';
-import Draw from '../screens/Draw';
+import DrawScreen from '../screens/DrawScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const BottomTab = createBottomTabNavigator();
 const INITIAL_ROUTE_NAME = 'Draw';
@@ -19,26 +20,18 @@ export default function BottomTabNavigator({ navigation, route }) {
     <BottomTab.Navigator initialRouteName={INITIAL_ROUTE_NAME}>
       <BottomTab.Screen
         name="Draw"
-        component={Draw}
+        component={DrawScreen}
         options={{
-          title: 'Resources',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-leaf"/>,
+          title: 'Draw',
+          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-brush"/>,
         }}
       />
       <BottomTab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Settings"
+        component={SettingsScreen}
         options={{
-          title: 'Get Started',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-code-working"/>,
-        }}
-      />
-      <BottomTab.Screen
-        name="Links"
-        component={LinksScreen}
-        options={{
-          title: 'Resources',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-book"/>,
+          title: 'Settings',
+          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-settings"/>,
         }}
       />
     </BottomTab.Navigator>
@@ -48,10 +41,5 @@ export default function BottomTabNavigator({ navigation, route }) {
 function getHeaderTitle(route) {
   const routeName = route.state?.routes[route.state.index]?.name ?? INITIAL_ROUTE_NAME;
 
-  switch (routeName) {
-    case 'Home':
-      return 'How to get started';
-    case 'Links':
-      return 'Links to learn more';
-  }
+  return routeName
 }

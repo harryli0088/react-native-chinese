@@ -5,7 +5,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import loadLocalResource from 'react-native-local-resource';
 import { MonoText } from '../components/StyledText';
 import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
-import withSettings from "../components/Settings/Settings"
+import { withSettings } from "../components/Settings/Settings"
 import  {PanGestureHandler} from 'react-native-gesture-handler'
 
 import chineseOutput from '../data/chineseOutput.txt'
@@ -84,10 +84,6 @@ class DrawScreen extends React.Component {
   }
 
 
-
-  toggleTraditionalOrSimplified = () => {
-    this.props.setSetting("traditionalOrSimplified", this.props.settings.traditionalOrSimplified==="traditional"?"simplified":"traditional")
-  }
 
   handlePressIn = e => { //this happens before gesture
     const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
@@ -223,10 +219,6 @@ class DrawScreen extends React.Component {
               onPress={this.undoPoint}
               title="Undo"
             />
-            <Button
-              onPress={this.toggleTraditionalOrSimplified}
-              title={"Switch to " + this.getSwitchButtonText()}
-            />
           </View>
         </View>
       );
@@ -253,5 +245,5 @@ const styles = StyleSheet.create({
   },
   chineseText: {
     fontSize: 20
-  }
+  },
 });

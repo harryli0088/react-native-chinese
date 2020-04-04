@@ -1,40 +1,49 @@
 import React from 'react'
 import { getAsyncStorage, setAsyncStorage } from '../../functions/asyncStorage';
 
-const withSettings = Component => {
-  class WithSettings extends React.Component {
-    constructor(props) {
-      super(props);
+const SettingsContext = React.createContext({settings: {}, setSetting: () => {}});
 
-      this.state = {
-        traditionalOrSimplified: "traditional"
-      };
-    }
+export default class Settings extends React.Component {
+  constructor(props) {
+    super(props);
 
-    componentDidMount() {
-      this.getSettingsFromAsyncStorage()
-    }
-
-    getSettingsFromAsyncStorage = async () => {
-      this.setState({
-        traditionalOrSimplified: await getAsyncStorage('traditionalOrSimplified') === "traditional" ? "traditional" : "simplified",
-      })
-    }
-
-    setSettings = (key, value) => {
-      console.log("set", key, value)
-      this.setState({[key]:value})
-      setAsyncStorage(key, value)
-    }
-
-    render() {
-      return (
-        <Component {...this.props} settings={this.state} setSetting={this.setSettings}/>
-      );
-    }
+    this.state = {
+      traditionalOrSimplified: "traditional"
+    };
   }
 
-  return WithSettings
-};
+  componentDidMount() {
+    this.getSettingsFromAsyncStorage()
+  }
 
-export default withSettings
+  getSettingsFromAsyncStorage = async () => {
+    this.setState({
+      traditionalOrSimplified: await getAsyncStorage('traditionalOrSimplified') === "traditional" ? "traditional" : "simplified",
+    })
+  }
+
+  setSetting = (key, value) => {
+    console.log("set", key, value)
+    this.setState({[key]:value})
+    setAsyncStorage(key, value)
+  }
+
+  render() {
+    const value = {
+      settings: this.state,
+      setSetting: this.setSetting
+    }
+
+    return (
+      <SettingsContext.Provider value={value}>
+        {this.props.children}
+      </SettingsContext.Provider>
+    );
+  }
+}
+
+export const withSettings = Component => props => (
+  <SettingsContext.Consumer>
+    {settingsContainer => <Component {...props} settings={settingsContainer.settings} setSetting={settingsContainer.setSetting}/>}
+  </SettingsContext.Consumer>
+);
