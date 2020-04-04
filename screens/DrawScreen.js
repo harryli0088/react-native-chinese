@@ -209,16 +209,24 @@ class DrawScreen extends React.Component {
             )}
           </View>
 
-          <View>
-            {this.getNextButton(chineseSet)}
-            <Button
-              onPress={this.clearPoints}
-              title="Clear"
-            />
-            <Button
-              onPress={this.undoPoint}
-              title="Undo"
-            />
+          <View style={styles.tabBarInfoContainer}>
+            <View style={{display:"flex", flexDirection:"row", marginTop:10}}>
+              <View style={{width:"25%"}}>
+                <Button
+                  onPress={this.clearPoints}
+                  title="Clear"
+                />
+              </View>
+              <View style={{width:"25%"}}>
+                <Button
+                  onPress={this.undoPoint}
+                  title="Undo"
+                />
+              </View>
+              <View style={{width:"50%"}}>
+                {this.getNextButton(chineseSet)}
+              </View>
+            </View>
           </View>
         </View>
       );
@@ -245,5 +253,25 @@ const styles = StyleSheet.create({
   },
   chineseText: {
     fontSize: 20
+  },
+  tabBarInfoContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: 'black',
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 20,
+      },
+    }),
+    alignItems: 'center',
+    backgroundColor: '#fbfbfb',
+    paddingVertical: 20,
   },
 });
