@@ -49,10 +49,10 @@ export default class DrawScreen extends React.Component {
     this.chinese = await loadLocalResource(chineseOutput).then(content => {
       return JSON.parse(content);
     });
+    this.getNewSet()
     this.setState({
       status: "done"
     })
-    this.getNewSet()
   }
 
   getNewSet = () => {
@@ -67,9 +67,9 @@ export default class DrawScreen extends React.Component {
 
   getCurrentSet = () => {
     if(this.chinese && this.chinese.parsed && this.chinese.parsed[this.state.setIndex]) {
-      return this.chinese.parsed[this.state.setIndex][this.state.traditionalOrSimplified]
+      return this.chinese.parsed[this.state.setIndex]
     }
-    return ""
+    return null
   }
 
   getNextCharacter = () => {
@@ -110,12 +110,12 @@ export default class DrawScreen extends React.Component {
   clearPoints = () => this.setState({points: []})
 
 
-  getText = currentSet => {
+  getText = chineseSet => {
     if(this.state.status === "loading") {
       return "Loading..."
     }
 
-    return "You are writing the set " + currentSet
+    return "You are writing the set " + chineseSet
   }
 
   // boldCurrentCharacter = (text, currentCharacter) => {
@@ -133,9 +133,9 @@ export default class DrawScreen extends React.Component {
   //   )
   // }
 
-  getCurrentCharacter = currentSet => {
-    if(currentSet.length > this.state.characterIndex) {
-      return currentSet[this.state.characterIndex]
+  getCurrentCharacter = chineseSet => {
+    if(chineseSet.length > this.state.characterIndex) {
+      return chineseSet[this.state.characterIndex]
     }
 
     return ""
@@ -149,8 +149,8 @@ export default class DrawScreen extends React.Component {
     return "Traditional"
   }
 
-  getNextButton = currentSet => {
-    if(currentSet.length-1 <= this.state.characterIndex) {
+  getNextButton = chineseSet => {
+    if(chineseSet.length-1 <= this.state.characterIndex) {
       return <Button title="Next Set" onPress={this.getNewSet}/>
     }
 
@@ -159,62 +159,70 @@ export default class DrawScreen extends React.Component {
 
 
   render() {
-    const currentSet = this.getCurrentSet()
-    const currentCharacter = this.getCurrentCharacter(currentSet)
+    if(this.state.status === "done") {
+      const currentSet = this.getCurrentSet()
+      const chineseSet = currentSet[this.state.traditionalOrSimplified]
+      const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyin]
+      const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
+      const currentCharacter = this.getCurrentCharacter(chineseSet)
 
-    return (
-      <View style={styles.container}>
-        <Button
-          onPress={this.clearPoints}
-          title="Clear"
-        />
-        <Button
-          onPress={this.toggleTraditionalOrSimplified}
-          title={"Switch to " + this.getSwitchButtonText()}
-        />
-        <View>
-          <Text>{this.getText(currentSet)}</Text>
-        </View>
-        <PanGestureHandler onGestureEvent={this.handleGesture}>
-          <Svg width={dimensions.window.width} height={dimensions.window.width}>
-            <Rect //this is a dummy background
-              width={dimensions.window.width}
-              height={dimensions.window.width}
-              fill="#48C9B0"
-            />
-            <SvgText //this is the character the user should be writing
-              x={dimensions.window.width/2}
-              y={dimensions.window.width/2}
-              dy="35%"
-              textAnchor="middle"
-              fill="#777"
-              fontSize={dimensions.window.width}>
-              {currentCharacter}
-            </SvgText>
-            <G>
-              {this.state.points.map((array,i) => { //this renders the strokes that the user draws
-                if(array.length > 1) {
-                  return <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth={strokeWidth}/>
-                }
-                else if(array.length > 0) {
-                  return <Circle key={i} cx={array[0].x} cy={array[0].y} r={strokeWidth/2} fill="white"/>
-                }
-              })}
-            </G>
-            <Rect //this transparent rect handles the on press in event
-              width={dimensions.window.width}
-              height={dimensions.window.width}
-              fill="transparent"
-              onPressIn={this.handlePressIn}
-            />
-          </Svg>
-        </PanGestureHandler>
+      return (
+        <View style={styles.container}>
+          <Button
+            onPress={this.clearPoints}
+            title="Clear"
+          />
+          <Button
+            onPress={this.toggleTraditionalOrSimplified}
+            title={"Switch to " + this.getSwitchButtonText()}
+          />
+          <View>
+            <Text>{this.getText(chineseSet)}, {pinyin}</Text>
+            {english.map(e => <Text>{e}</Text>)}
+          </View>
+          <PanGestureHandler onGestureEvent={this.handleGesture}>
+            <Svg width={dimensions.window.width} height={dimensions.window.width}>
+              <Rect //this is a dummy background
+                width={dimensions.window.width}
+                height={dimensions.window.width}
+                fill="#48C9B0"
+              />
+              <SvgText //this is the character the user should be writing
+                x={dimensions.window.width/2}
+                y={dimensions.window.width/2}
+                dy="35%"
+                textAnchor="middle"
+                fill="#777"
+                fontSize={dimensions.window.width}>
+                {currentCharacter}
+              </SvgText>
+              <G>
+                {this.state.points.map((array,i) => { //this renders the strokes that the user draws
+                  if(array.length > 1) {
+                    return <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth={strokeWidth}/>
+                  }
+                  else if(array.length > 0) {
+                    return <Circle key={i} cx={array[0].x} cy={array[0].y} r={strokeWidth/2} fill="white"/>
+                  }
+                })}
+              </G>
+              <Rect //this transparent rect handles the on press in event
+                width={dimensions.window.width}
+                height={dimensions.window.width}
+                fill="transparent"
+                onPressIn={this.handlePressIn}
+              />
+            </Svg>
+          </PanGestureHandler>
 
-        <View>
-          {this.getNextButton(currentSet)}
+          <View>
+            {this.getNextButton(chineseSet)}
+          </View>
         </View>
-      </View>
-    );
+      );
+    }
+
+    return <Text>Loading...</Text>
   }
 }
 
