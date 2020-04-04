@@ -21,6 +21,13 @@ import Svg, {
 
 const strokeWidth = 10
 
+const FIELD_TO_PARSED_INDEX_MAP = {
+  traditional: 0,
+  simplified: 1,
+  pinyin: 2,
+  english: 3
+}
+
 export default class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
@@ -30,7 +37,7 @@ export default class DrawScreen extends React.Component {
       points: [],
       setIndex: -1,
       characterIndex: 0,
-      traditionalOrSimplified: 0
+      traditionalOrSimplified: FIELD_TO_PARSED_INDEX_MAP.traditional
     }
   }
 
@@ -75,17 +82,11 @@ export default class DrawScreen extends React.Component {
     this.clearPoints()
   }
 
-  getCurrentCharacter = (currentSet) => {
-    if(currentSet.length > this.state.characterIndex) {
-      return currentSet[this.state.characterIndex]
-    }
 
-    return ""
-  }
 
   toggleTraditionalOrSimplified = () => {
     this.setState({
-      traditionalOrSimplified: this.state.traditionalOrSimplified===1 ? 0 : 1
+      traditionalOrSimplified: this.state.traditionalOrSimplified===FIELD_TO_PARSED_INDEX_MAP.traditional ? FIELD_TO_PARSED_INDEX_MAP.simplified : FIELD_TO_PARSED_INDEX_MAP.traditional
     })
   }
 
@@ -109,7 +110,7 @@ export default class DrawScreen extends React.Component {
   clearPoints = () => this.setState({points: []})
 
 
-  getText = (currentSet) => {
+  getText = currentSet => {
     if(this.state.status === "loading") {
       return "Loading..."
     }
@@ -117,15 +118,59 @@ export default class DrawScreen extends React.Component {
     return "You are writing the set " + currentSet
   }
 
+  // boldCurrentCharacter = (text, currentCharacter) => {
+  //   const split = text.split(currentCharacter).map(str => <Text>{str}</Text>)
+  //
+  //   for(let i=0; i<split.length-1; ++i) {
+  //     split.splice(i,0,<Text>{currentCharacter}</Text>)
+  //     ++i
+  //   }
+  //
+  //   return (
+  //     <React.Fragment>
+  //       {split.map(s => s)}
+  //     </React.Fragment>
+  //   )
+  // }
+
+  getCurrentCharacter = currentSet => {
+    if(currentSet.length > this.state.characterIndex) {
+      return currentSet[this.state.characterIndex]
+    }
+
+    return ""
+  }
+
+  getSwitchButtonText = () => {
+    if(this.state.traditionalOrSimplified === FIELD_TO_PARSED_INDEX_MAP.traditional) {
+      return "Simplified"
+    }
+
+    return "Traditional"
+  }
+
+  getNextButton = currentSet => {
+    if(currentSet.length-1 <= this.state.characterIndex) {
+      return <Button title="Next Set" onPress={this.getNewSet}/>
+    }
+
+    return <Button title="Next Character" onPress={this.getNextCharacter}/>
+  }
+
 
   render() {
     const currentSet = this.getCurrentSet()
+    const currentCharacter = this.getCurrentCharacter(currentSet)
 
     return (
       <View style={styles.container}>
         <Button
           onPress={this.clearPoints}
           title="Clear"
+        />
+        <Button
+          onPress={this.toggleTraditionalOrSimplified}
+          title={"Switch to " + this.getSwitchButtonText()}
         />
         <View>
           <Text>{this.getText(currentSet)}</Text>
@@ -135,7 +180,7 @@ export default class DrawScreen extends React.Component {
             <Rect //this is a dummy background
               width={dimensions.window.width}
               height={dimensions.window.width}
-              fill="blue"
+              fill="#48C9B0"
             />
             <SvgText //this is the character the user should be writing
               x={dimensions.window.width/2}
@@ -144,7 +189,7 @@ export default class DrawScreen extends React.Component {
               textAnchor="middle"
               fill="#777"
               fontSize={dimensions.window.width}>
-              {this.getCurrentCharacter(currentSet)}
+              {currentCharacter}
             </SvgText>
             <G>
               {this.state.points.map((array,i) => { //this renders the strokes that the user draws
@@ -166,8 +211,7 @@ export default class DrawScreen extends React.Component {
         </PanGestureHandler>
 
         <View>
-          <Button title="Next Character" onPress={this.getNextCharacter}/>
-          <Button title="Next Set" onPress={this.getNewSet}/>
+          {this.getNextButton(currentSet)}
         </View>
       </View>
     );
