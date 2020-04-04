@@ -22,13 +22,14 @@ export default class DrawScreen extends React.Component {
     super(props)
 
     this.state = {
-      points: [[]]
+      points: []
     }
   }
 
   handlePressIn = e => { //this happens before gesture
     const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
-    pointsCopy.push([])
+    console.log("press", e)
+    pointsCopy.push([{x:e.nativeEvent.locationX, y:e.nativeEvent.locationY}])
     this.setState({
       points: pointsCopy
     })
@@ -43,29 +44,39 @@ export default class DrawScreen extends React.Component {
   }
 
   render() {
-    console.log(this.state.points.length)
+    const strokeWidth = 7
+
     return (
       <View style={styles.container}>
         <Button
-          onPress={() => {
-            console.log('You tapped the button!');
-          }}
-          title="Press Me"
+          onPress={e => this.setState({points: []})}
+          title="Clear"
         />
-        <Text style={{color:"black"}}>Test</Text>
-          <PanGestureHandler onGestureEvent={this.handleGesture}>
-            <Svg width="500" height="500" onPress={e => console.log(e)}>
-              <Rect
-                width={500}
-                height={500}
-                fill="blue"
-                onPressIn={this.handlePressIn}
-              />
-              {this.state.points.map((array,i) =>
-                array.length>0 ? <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth="5"/> : null
-              )}
-            </Svg>
-          </PanGestureHandler>
+        <PanGestureHandler onGestureEvent={this.handleGesture}>
+          <Svg width="500" height="500" onPress={e => console.log(e)}>
+            <Rect
+              width={500}
+              height={500}
+              fill="blue"
+            />
+            <G>
+              {this.state.points.map((array,i) => {
+                if(array.length > 1) {
+                  return <Path key={i} d={"M"+array.map(p => p.x+" "+p.y).join("L")} stroke="white" strokeWidth={strokeWidth}/>
+                }
+                else if(array.length > 0) {
+                  return <Circle key={i} cx={array[0].x} cy={array[0].y} r={strokeWidth/2} fill="white"/>
+                }
+              })}
+            </G>
+            <Rect
+              width={500}
+              height={500}
+              fill="transparent"
+              onPressIn={this.handlePressIn}
+            />
+          </Svg>
+        </PanGestureHandler>
 
         <View style={styles.tabBarInfoContainer}>
           <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
