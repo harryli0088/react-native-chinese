@@ -7,6 +7,8 @@ import { MonoText } from '../components/StyledText';
 import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
 import { withSettings } from "../components/Settings/Settings"
 import  {PanGestureHandler} from 'react-native-gesture-handler'
+import * as curveMatcher from 'curve-matcher'
+import * as d3 from 'd3'
 
 import dictionary from '../data/chineseOutput.txt'
 import strokes from '../data/strokesOutput.txt'
@@ -32,15 +34,19 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
+const MATCH_THRESHOLD = 0.8
+
 class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
       status:"loading",
-      points: [],
-      setIndex: -1,
-      characterIndex: 0,
+      userStrokes: [], //2d array of validated strokes
+      inputStroke: [], //array of points for the stroke the user is currently entering
+
+      setIndex: -1, //the index in the dictionary.parsed that we are looking at
+      characterIndex: 0, //the character in the set we are looking at
     }
   }
 
@@ -74,47 +80,60 @@ class DrawScreen extends React.Component {
 
 
   getNewSet = () => {
-    const newSetIndex = Math.floor(Math.random()*this.dictionary.parsed.length)
+    const newSetIndex = Math.floor(Math.random()*this.dictionary.parsed.length) //generate a random set index
 
     this.setState({
-      setIndex: newSetIndex,
-      characterIndex: 0,
+      setIndex: newSetIndex, //set the new set
+      characterIndex: 0, //reset the character index to the beginning
     })
-    this.clearPoints()
+    this.clearUserStrokes() //clear all of the strokes
   }
 
   getCurrentSet = () => {
-    if(this.dictionary && this.dictionary.parsed && this.dictionary.parsed[this.state.setIndex]) {
-      return this.dictionary.parsed[this.state.setIndex]
+    if(this.dictionary && this.dictionary.parsed && this.dictionary.parsed[this.state.setIndex]) { //if the dictionary exists AND the set index is valid
+      return this.dictionary.parsed[this.state.setIndex] //return the parsed set in the dictionary
     }
     return null
   }
 
   getNextCharacter = () => {
-    if(this.getCurrentSet().length-1 > this.state.characterIndex) {
-      this.setState({characterIndex: this.state.characterIndex+1})
+    if(this.getCurrentSet().length-1 > this.state.characterIndex) { //if there are more characters remaining in the set
+      this.setState({characterIndex: this.state.characterIndex+1}) //move to the next character
     }
-    else {
-      this.getNewSet()
+    else { //else we are at the end of the set
+      this.getNewSet() //get a new set
     }
-    this.clearPoints()
+    this.clearUserStrokes() //clear the strokes
   }
 
-
-
-  handlePressIn = e => { //this happens before gesture
-    const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
-    pointsCopy.push([])
+  addInputStroke = () => { //push the input stroke into the array of user strokes
+    const inputStrokeCopy = JSON.parse(JSON.stringify(this.state.inputStroke)) //copy the input stroke
+    const userStrokesCopy = JSON.parse(JSON.stringify(this.state.userStrokes)) //copy the user strokes
+    userStrokesCopy.push(inputStrokeCopy) //push the input stroke copy
     this.setState({
-      points: pointsCopy
+      userStrokes: userStrokesCopy
+    })
+
+    this.clearInputStroke() //clear the input stroke
+  }
+
+  clearInputStroke = () => { //clear the user input stroke
+    this.setState({
+      inputStroke: []
     })
   }
 
+  clearUserStrokes = () => this.setState({userStrokes: []}) //clear all the strokes
+
+  undoUserStroke = () => this.setState({userStrokes: this.state.userStrokes.slice(0, this.state.userStrokes.length-1)}) //remove the last stroke in the user strokes array
+
+  //TODO bring the on press in thing back because if feels like gesture starts too late
+
   handleGesture = e => {
-    const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
-    pointsCopy[pointsCopy.length-1].push({x:e.nativeEvent.x, y:e.nativeEvent.y})
+    const inputStrokeCopy = JSON.parse(JSON.stringify(this.state.inputStroke)) //copy the input stroke
+    inputStrokeCopy.push({x:e.nativeEvent.x, y:e.nativeEvent.y}) //push the point the user moved to
     this.setState({
-      points: pointsCopy
+      inputStroke: inputStrokeCopy
     })
   }
 
@@ -122,51 +141,64 @@ class DrawScreen extends React.Component {
     if(e.nativeEvent.oldState===0 && e.nativeEvent.state===2) { //gesture started
     }
     else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
-      console.log("gesture ended", this.state.points[this.state.points.length-1])
+      const {
+        currentCharacter,
+      } = this.getChineseInfo()
+
+      if(this.strokes[currentCharacter]) { //if this character has strokes
+        const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
+        const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke into an x,y key value object
+          ({x: m[0], y: m[1]})
+        )
+        const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed) //compare the similarity
+        console.log("similarity",similarity)
+        if(similarity > 0) { //if the stroke was similar enough
+          this.addInputStroke() //add the input stroke
+        }
+        else { //the stroke was invalid
+          this.clearInputStroke() //clear the stroke
+        }
+      }
+      else { //we don't have strokes to validate
+        this.addInputStroke() //add the input stroke
+      }
     }
   }
 
-  handlePressOut = e => { //this happens after gesture
-    // console.log("press out")
-  }
-
-  clearPoints = () => this.setState({points: []})
-
-  undoPoint = () => this.setState({points: this.state.points.slice(0, this.state.points.length-1)})
 
 
-
-  // boldCurrentCharacter = (text, currentCharacter) => {
-  //   const split = text.split(currentCharacter).map(str => <Text>{str}</Text>)
-  //
-  //   for(let i=0; i<split.length-1; ++i) {
-  //     split.splice(i,0,<Text>{currentCharacter}</Text>)
-  //     ++i
-  //   }
-  //
-  //   return (
-  //     <React.Fragment>
-  //       {split.map(s => s)}
-  //     </React.Fragment>
-  //   )
-  // }
 
   getCurrentCharacter = chineseSet => {
     if(chineseSet.length > this.state.characterIndex) { //if this index is valid
-      const currentCharacter = chineseSet[this.state.characterIndex] //return the character
+      return chineseSet[this.state.characterIndex] //return the character
+    }
+
+    return null //else return nothing
+  }
+
+  renderCurrentCharacter = currentCharacter => {
+    if(currentCharacter) { //if this character is valid
       if(this.strokes[currentCharacter]) { //if there are strokes for this character
-        const scale = dimensions.window.width / 1000
+        const scale = dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
+        const colorScale = d3.scaleLinear().domain([0, this.strokes[currentCharacter].strokes.length]).range(["red", "blue"])
         return ( //render via the stroke paths
           <G transform={"scale("+scale+","+scale+")"}>
             {this.strokes[currentCharacter].strokes.map((d,i) =>
-              <Path key={i} d={d} fill="#777"></Path>
+              <Path
+                key={i}
+                d={d}
+                fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
+                stroke={colorScale(i)}
+                strokeWidth={2}
+                style={{transition: "1s"}}
+              />
             )}
           </G>
         )
       }
 
-      return (
-        <SvgText //else render via text
+      return ( //else we do not have the strokes for this character, render via text
+        <SvgText
           x={dimensions.window.width/2}
           y={dimensions.window.width/2}
           dy="30%"
@@ -192,14 +224,6 @@ class DrawScreen extends React.Component {
     return null //else return nothing
   }
 
-  getSwitchButtonText = () => {
-    if(this.props.settings.traditionalOrSimplified === "traditional") { //if this is traditional
-      return "Simplified" //show switch to simplified
-    }
-
-    return "Traditional" //else show switch to traditional
-  }
-
   getNextButton = chineseSet => {
     if(chineseSet.length-1 <= this.state.characterIndex) {
       return <Button title="Next Set >" onPress={this.getNewSet}/>
@@ -208,13 +232,51 @@ class DrawScreen extends React.Component {
     return <Button title="Next Character >" onPress={this.getNextCharacter}/>
   }
 
+  getChineseInfo = () => { //get all the info we need for this character
+    const currentSet = this.getCurrentSet()
+    const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
+    const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
+    const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
+    const currentCharacter = this.getCurrentCharacter(chineseSet)
+
+    return {
+      currentSet,
+      chineseSet,
+      pinyin,
+      english,
+      currentCharacter,
+    }
+  }
+
+  renderPathFromPoints = (points, index) => {
+    if(points.length > 1) {
+      return (
+        <Path
+          key={index}
+          d={"M"+points.map(p => p.x+" "+p.y).join("L")}
+          stroke="white"
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+        />
+      )
+    }
+    else if(points.length > 0) {
+      return <Circle key={index} cx={points[0].x} cy={points[0].y} r={strokeWidth/2} fill="white"/>
+    }
+  }
+
+
+
 
   render() {
     if(this.state.status === "done") {
-      const currentSet = this.getCurrentSet()
-      const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
-      const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
-      const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
+      const {
+        currentSet,
+        chineseSet,
+        pinyin,
+        english,
+        currentCharacter,
+      } = this.getChineseInfo()
 
       return (
         <View style={styles.container}>
@@ -225,32 +287,11 @@ class DrawScreen extends React.Component {
                 height={dimensions.window.width}
                 fill="#48C9B0"
               />
-              {this.getCurrentCharacter(chineseSet)}
+              {this.renderCurrentCharacter(currentCharacter)}
               <G>
-                {this.state.points.map((array,i) => { //this renders the strokes that the user draws
-                  if(array.length > 1) {
-                    return (
-                      <Path
-                        key={i}
-                        d={"M"+array.map(p => p.x+" "+p.y).join("L")}
-                        stroke="white"
-                        strokeWidth={strokeWidth}
-                        strokeLinejoin="round"
-                      />
-                    )
-                  }
-                  else if(array.length > 0) {
-                    return <Circle key={i} cx={array[0].x} cy={array[0].y} r={strokeWidth/2} fill="white"/>
-                  }
-                })}
+                {this.state.userStrokes.map((array,i) => this.renderPathFromPoints(array, i))}
+                {this.renderPathFromPoints(this.state.inputStroke)}
               </G>
-              <Rect //this transparent rect handles the on press in event
-                width={dimensions.window.width}
-                height={dimensions.window.width}
-                fill="transparent"
-                onPressIn={this.handlePressIn}
-                // onPressOut={this.handlePressOut}
-              />
             </Svg>
           </PanGestureHandler>
 
@@ -266,13 +307,13 @@ class DrawScreen extends React.Component {
             <View style={{display:"flex", flexDirection:"row", marginTop:10}}>
               <View style={{width:"25%"}}>
                 <Button
-                  onPress={this.clearPoints}
+                  onPress={this.clearUserStrokes}
                   title="Clear"
                 />
               </View>
               <View style={{width:"25%"}}>
                 <Button
-                  onPress={this.undoPoint}
+                  onPress={this.undoUserStroke}
                   title="Undo"
                 />
               </View>
