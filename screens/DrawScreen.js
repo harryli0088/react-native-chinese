@@ -189,6 +189,27 @@ class DrawScreen extends React.Component {
     return null //else return nothing
   }
 
+  renderGuideDots = (currentCharacter) => {
+    if(this.strokes[currentCharacter] && this.strokes[currentCharacter].medians && this.strokes[currentCharacter].medians[this.state.userStrokes.length]) {
+      const medians = this.strokes[currentCharacter].medians[this.state.userStrokes.length]
+      return medians.map((d,i) => {
+        const order = i===0 ? "first" : (i===medians.length-1 ? "last" : "middle")
+        if(order==="first" || order==="last") {
+          return (
+            <Circle //render median
+              key={i}
+              cx={d[0]}
+              cy={d[1]}
+              r={10}
+              stroke={order==="first" ? "#00FF66" : "#FF0033"}
+              strokeWidth={5}
+            />
+          )
+        }
+      })
+    }
+  }
+
   renderCurrentCharacter = currentCharacter => {
     if(currentCharacter) { //if this character is valid
       if(this.strokes[currentCharacter]) { //if there are strokes for this character
@@ -197,7 +218,7 @@ class DrawScreen extends React.Component {
         return ( //render via the stroke paths
           <G transform={"scale("+scale+","+scale+")"}>
             {this.strokes[currentCharacter].strokes.map((d,i) =>
-              <Path
+              <Path //render stroke
                 key={i}
                 d={d}
                 fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
@@ -206,19 +227,8 @@ class DrawScreen extends React.Component {
                 style={{transition: "1s"}}
               />
             )}
-            {this.strokes[currentCharacter].medians.map((s,i) =>
-              s.map((d,j) => {
-                return (
-                  <Circle
-                    key={i+"-"+j}
-                    cx={d[0]}
-                    cy={d[1]}
-                    r="5"
-                    fill="pink"
-                  />
-                )
-              })
-            )}
+
+            {this.renderGuideDots(currentCharacter)}
           </G>
         )
       }
@@ -311,7 +321,7 @@ class DrawScreen extends React.Component {
               <Rect //this is a dummy background
                 width={dimensions.window.width}
                 height={dimensions.window.width}
-                fill="#48C9B0"
+                fill="#666"
               />
               {this.renderCurrentCharacter(currentCharacter)}
               <G>
