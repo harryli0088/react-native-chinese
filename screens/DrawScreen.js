@@ -24,7 +24,7 @@ import Svg, {
   ForeignObject,
 } from 'react-native-svg';
 
-const STROKE_WIDTH = 5
+const STROKE_WIDTH = 3
 
 const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
@@ -34,7 +34,7 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
-const MATCH_THRESHOLD = 0.8
+const SIMILARITY_THRESHOLD = 0.8
 
 class DrawScreen extends React.Component {
   constructor(props) {
@@ -159,21 +159,22 @@ class DrawScreen extends React.Component {
 
       if(this.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
-        const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke into an x,y key value object
-          ({x: m[0], y: m[1]})
-        )
-        const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed) //compare the similarity
-        console.log("similarity",similarity)
-        if(similarity > 0) { //if the stroke was similar enough
-          this.addInputStroke() //add the input stroke
-        }
-        else { //the stroke was invalid
-          this.clearInputStroke() //clear the stroke
+        if(this.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
+          const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke into an x,y key value object
+            ({x: m[0], y: m[1]})
+          )
+          const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, {checkRotations: false}) //compare the similarity
+          console.log("similarity",similarity, this.state.inputStroke, mediansTransformed)
+          if(similarity > SIMILARITY_THRESHOLD) { //if the stroke was similar enough
+            this.addInputStroke() //add the input stroke
+          }
         }
       }
       else { //we don't have strokes to validate
         this.addInputStroke() //add the input stroke
       }
+
+      this.clearInputStroke() //clear the stroke
     }
   }
 
@@ -204,6 +205,19 @@ class DrawScreen extends React.Component {
                 strokeWidth={2}
                 style={{transition: "1s"}}
               />
+            )}
+            {this.strokes[currentCharacter].medians.map((s,i) =>
+              s.map((d,j) => {
+                return (
+                  <Circle
+                    key={i+"-"+j}
+                    cx={d[0]}
+                    cy={d[1]}
+                    r="5"
+                    fill="pink"
+                  />
+                )
+              })
             )}
           </G>
         )
