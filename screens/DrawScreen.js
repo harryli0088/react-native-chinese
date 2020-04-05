@@ -8,7 +8,8 @@ import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focuse
 import { withSettings } from "../components/Settings/Settings"
 import  {PanGestureHandler} from 'react-native-gesture-handler'
 
-import chineseOutput from '../data/chineseOutput.txt'
+import dictionary from '../data/chineseOutput.txt'
+import strokes from '../data/strokesOutput.txt'
 import dimensions from "../constants/Layout"
 
 import Svg, {
@@ -43,21 +44,36 @@ class DrawScreen extends React.Component {
   }
 
   componentDidMount() {
-    this.loadChinese()
+    this.loadDictionary()
+    this.loadStrokes()
   }
 
-  loadChinese = async () => {
-    this.chinese = await loadLocalResource(chineseOutput).then(content => {
+  loadDictionary = async () => {
+    this.dictionary = await loadLocalResource(dictionary).then(content => {
       return JSON.parse(content);
     });
     this.getNewSet()
-    this.setState({
-      status: "done"
-    })
+    this.setStatus()
+    console.log("LOAD DICTIONARY")
   }
 
+  loadStrokes = async () => {
+    this.strokes = await loadLocalResource(strokes).then(content => {
+      return JSON.parse(content);
+    });
+    this.setStatus()
+    console.log("LOAD STROKES")
+  }
+
+  setStatus = () => {
+    if(this.dictionary && this.strokes) {
+      this.setState({status: "done"})
+    }
+  }
+
+
   getNewSet = () => {
-    const newSetIndex = Math.floor(Math.random()*this.chinese.parsed.length)
+    const newSetIndex = Math.floor(Math.random()*this.dictionary.parsed.length)
 
     this.setState({
       setIndex: newSetIndex,
@@ -67,8 +83,8 @@ class DrawScreen extends React.Component {
   }
 
   getCurrentSet = () => {
-    if(this.chinese && this.chinese.parsed && this.chinese.parsed[this.state.setIndex]) {
-      return this.chinese.parsed[this.state.setIndex]
+    if(this.dictionary && this.dictionary.parsed && this.dictionary.parsed[this.state.setIndex]) {
+      return this.dictionary.parsed[this.state.setIndex]
     }
     return null
   }
@@ -125,7 +141,28 @@ class DrawScreen extends React.Component {
 
   getCurrentCharacter = chineseSet => {
     if(chineseSet.length > this.state.characterIndex) { //if this index is valid
-      return chineseSet[this.state.characterIndex] //return the character
+      const currentCharacter = chineseSet[this.state.characterIndex] //return the character
+      if(this.strokes[currentCharacter]) { //if there are strokes for this character
+        const scale = dimensions.window.width / 1000
+        return (
+          <G transform={"scale("+scale+","+scale+")"}>
+            {this.strokes[currentCharacter].strokes.map((d,i) =>
+              <Path key={i} d={d} fill="#777"></Path>
+            )}
+          </G>
+        )
+      }
+      return (
+        <SvgText //this is the character the user should be writing
+          x={dimensions.window.width/2}
+          y={dimensions.window.width/2}
+          dy="30%"
+          textAnchor="middle"
+          fill="#777"
+          fontSize={0.8*dimensions.window.width}>
+          {currentCharacter}
+        </SvgText>
+      )
     }
 
     return "" //else return nothing
@@ -154,7 +191,6 @@ class DrawScreen extends React.Component {
       const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
       const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
       const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
-      const currentCharacter = this.getCurrentCharacter(chineseSet)
 
       return (
         <View style={styles.container}>
@@ -165,15 +201,7 @@ class DrawScreen extends React.Component {
                 height={dimensions.window.width}
                 fill="#48C9B0"
               />
-              <SvgText //this is the character the user should be writing
-                x={dimensions.window.width/2}
-                y={dimensions.window.width/2}
-                dy="30%"
-                textAnchor="middle"
-                fill="#777"
-                fontSize={0.8*dimensions.window.width}>
-                {currentCharacter}
-              </SvgText>
+              {this.getCurrentCharacter(chineseSet)}
               <G>
                 {this.state.points.map((array,i) => { //this renders the strokes that the user draws
                   if(array.length > 1) {
@@ -232,7 +260,11 @@ class DrawScreen extends React.Component {
       );
     }
 
-    return <Text>Loading...</Text>
+    return (
+      <View style={{display:"flex", justifyContent:"center", alignItems:"center", height:"100%"}}>
+        <Text style={{fontSize:30}}>Loading...</Text>
+      </View>
+    )
   }
 }
 
@@ -259,7 +291,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    ...Platform.select({
+    ...Platform.select({ //top shadow
       ios: {
         shadowColor: 'black',
         shadowOffset: { width: 0, height: -3 },
@@ -272,6 +304,6 @@ const styles = StyleSheet.create({
     }),
     alignItems: 'center',
     backgroundColor: '#fbfbfb',
-    paddingVertical: 20,
+    paddingVertical: 5,
   },
 });
