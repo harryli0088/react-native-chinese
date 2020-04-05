@@ -104,8 +104,7 @@ class DrawScreen extends React.Component {
 
   handlePressIn = e => { //this happens before gesture
     const pointsCopy = JSON.parse(JSON.stringify(this.state.points))
-    console.log("press", e)
-    pointsCopy.push([{x:e.nativeEvent.locationX, y:e.nativeEvent.locationY}])
+    pointsCopy.push([])
     this.setState({
       points: pointsCopy
     })
@@ -117,6 +116,18 @@ class DrawScreen extends React.Component {
     this.setState({
       points: pointsCopy
     })
+  }
+
+  onHandlerStateChange = e => {
+    if(e.nativeEvent.oldState===0 && e.nativeEvent.state===2) { //gesture started
+    }
+    else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
+      console.log("gesture ended", this.state.points[this.state.points.length-1])
+    }
+  }
+
+  handlePressOut = e => { //this happens after gesture
+    // console.log("press out")
   }
 
   clearPoints = () => this.setState({points: []})
@@ -207,7 +218,7 @@ class DrawScreen extends React.Component {
 
       return (
         <View style={styles.container}>
-          <PanGestureHandler onGestureEvent={this.handleGesture}>
+          <PanGestureHandler onGestureEvent={this.handleGesture} onHandlerStateChange={this.onHandlerStateChange}>
             <Svg width={dimensions.window.width} height={dimensions.window.width}>
               <Rect //this is a dummy background
                 width={dimensions.window.width}
@@ -238,6 +249,7 @@ class DrawScreen extends React.Component {
                 height={dimensions.window.width}
                 fill="transparent"
                 onPressIn={this.handlePressIn}
+                // onPressOut={this.handlePressOut}
               />
             </Svg>
           </PanGestureHandler>
