@@ -35,6 +35,7 @@ const FIELD_TO_PARSED_INDEX_MAP = {
 }
 
 const SIMILARITY_THRESHOLD = 0.8
+const DISTANCE_THRESHOLD = 0.1
 
 class DrawScreen extends React.Component {
   constructor(props) {
@@ -160,12 +161,24 @@ class DrawScreen extends React.Component {
       if(this.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
         if(this.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
-          const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke into an x,y key value object
-            ({x: m[0], y: m[1]})
+          const scale = this.getStrokesScale()
+          const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke from [x,y] array format into {x:x, y:y} key-value format
+            ({
+              x: scale*m[0], //scale the coordinates
+              y: scale*m[1] //scale the coordinates
+            })
           )
+
           const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, {checkRotations: false}) //compare the similarity
-          console.log("similarity",similarity, this.state.inputStroke, mediansTransformed)
-          if(similarity > SIMILARITY_THRESHOLD) { //if the stroke was similar enough
+          const distance = Math.hypot( //calculate the distance between the start point and the start median
+            this.state.inputStroke[0].x - mediansTransformed[0].x,
+            this.state.inputStroke[0].y - mediansTransformed[0].y
+          )
+
+          if( //if the stroke was similar enough AND distance-wise close enough
+            similarity > SIMILARITY_THRESHOLD &&
+            distance < dimensions.window.width*DISTANCE_THRESHOLD
+          ) {
             this.addInputStroke() //add the input stroke
           }
         }
@@ -180,6 +193,7 @@ class DrawScreen extends React.Component {
 
 
 
+  getStrokesScale = () => dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
 
   getCurrentCharacter = chineseSet => {
     if(chineseSet.length > this.state.characterIndex) { //if this index is valid
@@ -213,7 +227,7 @@ class DrawScreen extends React.Component {
   renderCurrentCharacter = currentCharacter => {
     if(currentCharacter) { //if this character is valid
       if(this.strokes[currentCharacter]) { //if there are strokes for this character
-        const scale = dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
+        const scale = this.getStrokesScale()
         const colorScale = d3.scaleLinear().domain([0, this.strokes[currentCharacter].strokes.length]).range(["red", "blue"])
         return ( //render via the stroke paths
           <G transform={"scale("+scale+","+scale+")"}>
@@ -223,7 +237,7 @@ class DrawScreen extends React.Component {
                 d={d}
                 fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
                 stroke={colorScale(i)}
-                strokeWidth={2}
+                strokeWidth={4}
                 style={{transition: "1s"}}
               />
             )}
