@@ -24,7 +24,7 @@ import Svg, {
   ForeignObject,
 } from 'react-native-svg';
 
-const strokeWidth = 10
+const STROKE_WIDTH = 5
 
 const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
@@ -48,6 +48,8 @@ class DrawScreen extends React.Component {
       setIndex: -1, //the index in the dictionary.parsed that we are looking at
       characterIndex: 0, //the character in the set we are looking at
     }
+
+    this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
   }
 
   componentDidMount() {
@@ -127,14 +129,24 @@ class DrawScreen extends React.Component {
 
   undoUserStroke = () => this.setState({userStrokes: this.state.userStrokes.slice(0, this.state.userStrokes.length-1)}) //remove the last stroke in the user strokes array
 
-  //TODO bring the on press in thing back because if feels like gesture starts too late
+
+  handlePressIn = e => { //this happens before gesture
+    this.inputStrokeStart = {x:e.nativeEvent.locationX, y:e.nativeEvent.locationY} //record the press position because the gesture events don't record this
+  }
 
   handleGesture = e => {
     const inputStrokeCopy = JSON.parse(JSON.stringify(this.state.inputStroke)) //copy the input stroke
+
+    if(this.inputStrokeStart) { //if we need to record the start of the stroke first
+      inputStrokeCopy.push(this.inputStrokeStart)
+    }
     inputStrokeCopy.push({x:e.nativeEvent.x, y:e.nativeEvent.y}) //push the point the user moved to
+
     this.setState({
       inputStroke: inputStrokeCopy
     })
+
+    this.inputStrokeStart = null //clear the input stroke start
   }
 
   onHandlerStateChange = e => {
@@ -255,13 +267,13 @@ class DrawScreen extends React.Component {
           key={index}
           d={"M"+points.map(p => p.x+" "+p.y).join("L")}
           stroke="white"
-          strokeWidth={strokeWidth}
+          strokeWidth={STROKE_WIDTH}
           strokeLinejoin="round"
         />
       )
     }
     else if(points.length > 0) {
-      return <Circle key={index} cx={points[0].x} cy={points[0].y} r={strokeWidth/2} fill="white"/>
+      return <Circle key={index} cx={points[0].x} cy={points[0].y} r={STROKE_WIDTH/2} fill="white"/>
     }
   }
 
@@ -292,6 +304,12 @@ class DrawScreen extends React.Component {
                 {this.state.userStrokes.map((array,i) => this.renderPathFromPoints(array, i))}
                 {this.renderPathFromPoints(this.state.inputStroke)}
               </G>
+              <Rect //this transparent rect handles the on press in event
+                width={dimensions.window.width}
+                height={dimensions.window.width}
+                fill="transparent"
+                onPressIn={this.handlePressIn}
+              />
             </Svg>
           </PanGestureHandler>
 
