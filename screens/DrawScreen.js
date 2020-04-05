@@ -34,8 +34,8 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
-const SIMILARITY_THRESHOLD = 0.8
-const DISTANCE_THRESHOLD = 0.1
+const SIMILARITY_THRESHOLD = 0.77
+const DISTANCE_THRESHOLD = 0.13
 
 class DrawScreen extends React.Component {
   constructor(props) {
@@ -45,9 +45,12 @@ class DrawScreen extends React.Component {
       status:"loading",
       userStrokes: [], //2d array of validated strokes
       inputStroke: [], //array of points for the stroke the user is currently entering
+      strokeErrors: 0, //the number of times the user has messed up this stroke
 
       setIndex: -1, //the index in the dictionary.parsed that we are looking at
       characterIndex: 0, //the character in the set we are looking at
+
+      showGuideDots: false,
     }
 
     this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
@@ -114,7 +117,9 @@ class DrawScreen extends React.Component {
     const userStrokesCopy = JSON.parse(JSON.stringify(this.state.userStrokes)) //copy the user strokes
     userStrokesCopy.push(inputStrokeCopy) //push the input stroke copy
     this.setState({
-      userStrokes: userStrokesCopy
+      userStrokes: userStrokesCopy,
+      strokeErrors: 0, //reset the errors count
+      showGuideDots: false, //reset show guide dots
     })
 
     this.clearInputStroke() //clear the input stroke
@@ -174,12 +179,18 @@ class DrawScreen extends React.Component {
             this.state.inputStroke[0].x - mediansTransformed[0].x,
             this.state.inputStroke[0].y - mediansTransformed[0].y
           )
-
+          console.log("strokeIndex",strokeIndex,"similarity",similarity,"distance",distance,"strokeErrors",this.state.strokeErrors)
           if( //if the stroke was similar enough AND distance-wise close enough
             similarity > SIMILARITY_THRESHOLD &&
             distance < dimensions.window.width*DISTANCE_THRESHOLD
           ) {
             this.addInputStroke() //add the input stroke
+          }
+          else { //else the stroke was invalid
+            this.setState({
+              strokeErrors: this.state.strokeErrors + 1, //increment the errors count for this stroke
+              showGuideDots: this.state.strokeErrors > 1 //if the user has made n+2 errors or more, show the guide dots
+            })
           }
         }
       }
@@ -204,18 +215,22 @@ class DrawScreen extends React.Component {
   }
 
   renderGuideDots = (currentCharacter) => {
-    if(this.strokes[currentCharacter] && this.strokes[currentCharacter].medians && this.strokes[currentCharacter].medians[this.state.userStrokes.length]) {
-      const medians = this.strokes[currentCharacter].medians[this.state.userStrokes.length]
+    if(
+      this.state.showGuideDots && //if we want to show the guide dots
+      this.strokes[currentCharacter] && //if we have the strokes for this character
+      this.strokes[currentCharacter].medians && //if we have the medians for this character
+      this.strokes[currentCharacter].medians[this.state.userStrokes.length] //if the median is valid
+    ) {
+      const medians = this.strokes[currentCharacter].medians[this.state.userStrokes.length] //get the medians for this stroke
       return medians.map((d,i) => {
-        const order = i===0 ? "first" : (i===medians.length-1 ? "last" : "middle")
-        if(order==="first" || order==="last") {
+        if(i===0 || i===medians.length-1) { //if this is the first or last median
           return (
             <Circle //render median
               key={i}
               cx={d[0]}
               cy={d[1]}
               r={10}
-              stroke={order==="first" ? "#00FF66" : "#FF0033"}
+              stroke={i===0 ? "#00FF66" : "#FF0033"}
               strokeWidth={5}
             />
           )
