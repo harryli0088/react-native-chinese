@@ -143,40 +143,38 @@ class DrawScreen extends React.Component {
   getCurrentCharacter = chineseSet => {
     if(chineseSet.length > this.state.characterIndex) { //if this index is valid
       const currentCharacter = chineseSet[this.state.characterIndex] //return the character
-      console.log("currentCharacter",currentCharacter, chineseSet.length, this.state.characterIndex)
-      // if(this.strokes[currentCharacter]) { //if there are strokes for this character
-      //   const scale = dimensions.window.width / 1000
-      //   return ( //render via the stroke paths
-      //     <G transform={"scale("+scale+","+scale+")"}>
-      //       {this.strokes[currentCharacter].strokes.map((d,i) =>
-      //         <Path key={i} d={d} fill="#777"></Path>
-      //       )}
-      //     </G>
-      //   )
-      // }
-      //
-      // <SvgText //else render via text
-      //           x={dimensions.window.width/2}
-      //           y={dimensions.window.width/2}
-      //           dy="30%"
-      //           textAnchor="middle"
-      //           fill="#777"
-      //           fontSize={0.8*dimensions.window.width}
-      //           // style={{fontFamily:"space-mono"}}
-      //           >
-      //           {currentCharacter}
-      //         </SvgText>
+      if(this.strokes[currentCharacter]) { //if there are strokes for this character
+        const scale = dimensions.window.width / 1000
+        return ( //render via the stroke paths
+          <G transform={"scale("+scale+","+scale+")"}>
+            {this.strokes[currentCharacter].strokes.map((d,i) =>
+              <Path key={i} d={d} fill="#777"></Path>
+            )}
+          </G>
+        )
+      }
 
       return (
-        <ForeignObject
-          key={this.state.characterIndex} //keep this here to make sure the text rerenders
-          x={0}
-          y={0}
-          width={dimensions.window.width}
-          height={dimensions.window.width}
+        <SvgText //else render via text
+          x={dimensions.window.width/2}
+          y={dimensions.window.width/2}
+          dy="30%"
+          textAnchor="middle"
+          fill="#777"
+          fontSize={0.8*dimensions.window.width}
+          // style={{fontFamily:"space-mono"}}
           >
-          <Text style={{fontFamily:"wts11", color:"#777", fontSize:(dimensions.window.width)}}>{currentCharacter}</Text>
-        </ForeignObject>
+          {currentCharacter}
+        </SvgText>
+        // <ForeignObject
+        //   key={this.state.characterIndex} //keep this here to make sure the text rerenders
+        //   x={0.1*dimensions.window.width}
+        //   y={0.1*dimensions.window.width}
+        //   width={dimensions.window.width}
+        //   height={dimensions.window.width}
+        //   >
+        //   <Text style={{fontFamily:"wts11", color:"#777", fontSize:(0.8*dimensions.window.width)}}>{currentCharacter}</Text>
+        // </ForeignObject>
       )
     }
 
