@@ -34,6 +34,14 @@ export default function BottomTabNavigator({ navigation, route }) {
           tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-settings"/>,
         }}
       />
+      <BottomTab.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{
+          title: 'HomeScreen',
+          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-settings"/>,
+        }}
+      />
     </BottomTab.Navigator>
   );
 }
