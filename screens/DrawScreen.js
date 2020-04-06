@@ -6,7 +6,8 @@ import loadLocalResource from 'react-native-local-resource';
 import { MonoText } from '../components/StyledText';
 import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
 import { withSettings } from "../components/Settings/Settings"
-import  {PanGestureHandler} from 'react-native-gesture-handler'
+import  { PanGestureHandler } from 'react-native-gesture-handler'
+import  AnimatedPathFill from '../components/AnimatedElement/AnimatedPathFill'
 import * as curveMatcher from 'curve-matcher'
 import * as d3 from 'd3'
 
@@ -247,15 +248,27 @@ class DrawScreen extends React.Component {
         return ( //render via the stroke paths
           <G transform={"scale("+scale+","+scale+")"}>
             {this.strokes[currentCharacter].strokes.map((d,i) =>
-              <Path //render stroke
+              <AnimatedPathFill
                 key={i}
                 d={d}
-                fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
+                filled={colorScale(i)}
+                show={this.state.userStrokes.length > i}
+                duration={500}
                 stroke={colorScale(i)}
                 strokeWidth={4}
                 style={{transition: "1s"}}
               />
+
             )}
+
+            {/* <Path //render stroke
+              key={i}
+              d={d}
+              fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
+              stroke={colorScale(i)}
+              strokeWidth={4}
+              style={{transition: "1s"}}
+            /> */}
 
             {this.renderGuideDots(currentCharacter)}
           </G>

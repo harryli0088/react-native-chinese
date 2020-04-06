@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 // import { ToggleButton } from 'react-native-paper';
 import ToggleButtons from '../components/ToggleButtons/ToggleButtons';
@@ -32,9 +32,9 @@ const SettingsScreen = props => {
           />
         </View>
 
-        <Svg height="400" width="400">
+        {/* <Svg height="400" width="400">
           <AnimatedElement
-            component={Rect}
+            component={AnimatedRect}
             animateProps={{
               x:0,
               y:0,
@@ -56,7 +56,8 @@ const SettingsScreen = props => {
             animationType="timing"
             animationOptions={{duration: 1000}}
           />
-        </Svg>
+        </Svg> */}
+        <FadeInView opacity={props.settings.traditionalOrSimplified==="traditional"?1:0}/>
       </ScrollView>
     </View>
   );
@@ -71,3 +72,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
+
+
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+
+const FadeInView = (props) => {
+  const [fadeAnim] = React.useState(new Animated.Value(props.opacity))  // Initial value for opacity: 0
+  console.log("props.opacity",props.opacity)
+
+  React.useEffect(() => {
+    console.log("effects props.opacity",props.opacity)
+    Animated.timing(
+      fadeAnim,
+      {
+        toValue: props.opacity,
+        duration: 1000,
+      }
+    ).start();
+  }, [props])
+
+  return (
+    <Svg height="400" width="400">
+      <AnimatedRect
+        x={0}
+        y={0}
+        width={100}
+        height={100}
+        fill={fadeAnim.interpolate({
+          inputRange: [0,1],
+          outputRange: ["red","blue"]
+        })}
+        // opacity={fadeAnim}
+      />
+    </Svg>
+  );
+}

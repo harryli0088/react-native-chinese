@@ -67,14 +67,14 @@ export default class AnimatedElement extends React.Component {
       });
     })
 
-    console.log("interpolatedProps",interpolatedProps)
-
-    console.log(<this.props.component
-      ref={ ref => this.myComponentRef = ref }
-      {...this.props.staticProps}
-      {...this.props.animateProps}
-      {...interpolatedProps}
-    />)
+    // console.log("interpolatedProps",interpolatedProps)
+    //
+    // console.log(<this.props.component
+    //   ref={ ref => this.myComponentRef = ref }
+    //   {...this.props.staticProps}
+    //   {...this.props.animateProps}
+    //   {...interpolatedProps}
+    // />)
 
     return(
       <this.props.component
