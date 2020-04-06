@@ -35,14 +35,14 @@ const SettingsScreen = props => {
         <Svg height="400" width="400">
           <AnimatedElement
             component={Rect}
-            componentPropsToAnimate={{
+            animateProps={{
               x:0,
               y:0,
               width:props.settings.traditionalOrSimplified==="traditional"?300:150,
               height:200,
               fill:"black",
             }}
-            componentPropsStatic={{
+            staticProps={{
               onPress:e => console.log("PRESS"),
             }}
             animationType="spring"
