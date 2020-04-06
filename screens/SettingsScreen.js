@@ -40,13 +40,21 @@ const SettingsScreen = props => {
               y:0,
               width:props.settings.traditionalOrSimplified==="traditional"?300:150,
               height:200,
-              fill:"black",
+              stroke:"black",
+              strokeWidth:2,
+            }}
+            interpolateProps={{
+              fill: {
+                value:props.settings.traditionalOrSimplified==="traditional"?1:0,
+                inputRange: [0,1],
+                outputRange: ["red","blue"],
+              }
             }}
             staticProps={{
               onPress:e => console.log("PRESS"),
             }}
-            animationType="spring"
-            animationOptions={{friction: 1}}
+            animationType="timing"
+            animationOptions={{duration: 1000}}
           />
         </Svg>
       </ScrollView>
