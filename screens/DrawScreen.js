@@ -256,7 +256,6 @@ class DrawScreen extends React.Component {
                 duration={500}
                 stroke={colorScale(i)}
                 strokeWidth={4}
-                style={{transition: "1s"}}
               />
 
             )}

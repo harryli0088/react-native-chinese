@@ -17,7 +17,7 @@ const AnimatedPathFill = (props) => {
         duration: props.duration,
       }
     ).start();
-  }, [props])
+  }, [props.show])
 
   return (
     <AnimatedPath
