@@ -35,8 +35,9 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
-const SIMILARITY_THRESHOLD = 0.77
-const DISTANCE_THRESHOLD = 0.13
+const RESTRICT_ROTATION_ANGLE = 0.1 * Math.PI
+const SIMILARITY_THRESHOLD = 0.8
+const DISTANCE_THRESHOLD = 0.10
 
 class DrawScreen extends React.Component {
   constructor(props) {
@@ -175,15 +176,20 @@ class DrawScreen extends React.Component {
             })
           )
 
-          const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, {checkRotations: false}) //compare the similarity
-          const distance = Math.hypot( //calculate the distance between the start point and the start median
+          const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, { restrictRotationAngle: RESTRICT_ROTATION_ANGLE }) //compare the similarity
+          const startDistance = Math.hypot( //calculate the distance between the start point and the start median
             this.state.inputStroke[0].x - mediansTransformed[0].x,
             this.state.inputStroke[0].y - mediansTransformed[0].y
           )
-          console.log("strokeIndex",strokeIndex,"similarity",similarity,"distance",distance,"strokeErrors",this.state.strokeErrors)
+          const endDistance = Math.hypot( //calculate the distance between the end point and the end median
+            this.state.inputStroke[this.state.inputStroke.length-1].x - mediansTransformed[mediansTransformed.length-1].x,
+            this.state.inputStroke[this.state.inputStroke.length-1].y - mediansTransformed[mediansTransformed.length-1].y
+          )
+          console.log("strokeIndex",strokeIndex,"similarity",similarity,"startDistance",startDistance,"endDistance",endDistance,"strokeErrors",this.state.strokeErrors)
           if( //if the stroke was similar enough AND distance-wise close enough
             similarity > SIMILARITY_THRESHOLD &&
-            distance < dimensions.window.width*DISTANCE_THRESHOLD
+            startDistance < dimensions.window.width*DISTANCE_THRESHOLD &&
+            endDistance < dimensions.window.width*DISTANCE_THRESHOLD
           ) {
             this.addInputStroke() //add the input stroke
           }
