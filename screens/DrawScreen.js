@@ -340,6 +340,7 @@ class DrawScreen extends React.Component {
           stroke="white"
           strokeWidth={STROKE_WIDTH}
           strokeLinejoin="round"
+          strokeLinecap="round"
         />
       )
     }

@@ -1,20 +1,19 @@
-import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Animated, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 // import { ToggleButton } from 'react-native-paper';
 import ToggleButtons from '../components/ToggleButtons/ToggleButtons';
 import { withSettings } from "../components/Settings/Settings"
-import AnimatedElement from "../components/AnimatedElement/AnimatedElement"
+import getLength from "../functions/getLength"
+import { extendStart, getPathString } from "../functions/geometry"
+
 
 import Svg, {
-  Circle,
   G,
-  Path,
-  Line,
   Rect,
-  Text as SvgText,
-  ForeignObject,
+  Path,
+  Defs,
+  ClipPath,
 } from 'react-native-svg';
 
 const SettingsScreen = props => {
@@ -32,32 +31,9 @@ const SettingsScreen = props => {
           />
         </View>
 
-        {/* <Svg height="400" width="400">
-          <AnimatedElement
-            component={AnimatedRect}
-            animateProps={{
-              x:0,
-              y:0,
-              width:props.settings.traditionalOrSimplified==="traditional"?300:150,
-              height:200,
-              stroke:"black",
-              strokeWidth:2,
-            }}
-            interpolateProps={{
-              fill: {
-                value:props.settings.traditionalOrSimplified==="traditional"?1:0,
-                inputRange: [0,1],
-                outputRange: ["red","blue"],
-              }
-            }}
-            staticProps={{
-              onPress:e => console.log("PRESS"),
-            }}
-            animationType="timing"
-            animationOptions={{duration: 1000}}
-          />
-        </Svg> */}
-        <FadeInView opacity={props.settings.traditionalOrSimplified==="traditional"?1:0}/>
+        <ClipTest
+          traditionalOrSimplified={props.settings.traditionalOrSimplified}
+        />
       </ScrollView>
     </View>
   );
@@ -74,36 +50,70 @@ const styles = StyleSheet.create({
 });
 
 
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const ClipTest = props => {
+  return (
+    <Svg width={1000} height={1000} style={{background:"#777"}}>
+      <G transform="translate(0,400) scale(0.4,-0.4)">
+        <Defs>
+          <ClipPath id="test">
+            <Path d="M 687 669 Q 718 648 754 623 Q 770 613 786 615 Q 798 618 801 632 Q 802 648 789 678 Q 780 697 746 708 Q 665 726 651 715 Q 647 711 651 697 Q 655 687 687 669 Z"/>
+          </ClipPath>
+        </Defs>
 
-const FadeInView = (props) => {
-  const [fadeAnim] = React.useState(new Animated.Value(props.opacity))  // Initial value for opacity: 0
-  console.log("props.opacity",props.opacity)
+        <Rect x={0} y={0} width={1000} height={1000} fill="pink"></Rect>
+        <AnimatedPathDash
+          value={props.traditionalOrSimplified}
+        />
+      </G>
+    </Svg>
+  )
+}
+
+
+const points = [
+  {x: 657, y: 710},
+  {x: 750, y: 668},
+  {x: 781, y: 634},
+]
+
+const length = getLength(points)
+console.log("length",length)
+const STROKE_WIDTH = 200;
+const pathLength = length + STROKE_WIDTH/2
+console.log("pathLength",pathLength)
+
+const extendedMaskPoints = extendStart(points, STROKE_WIDTH / 2);
+const animationStrokePath = getPathString(extendedMaskPoints)
+console.log("animationStrokePath",animationStrokePath)
+
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+const AnimatedPathDash = (props) => {
+  const [dashoffsetAnimation] = React.useState(new Animated.Value(pathLength))
 
   React.useEffect(() => {
-    console.log("effects props.opacity",props.opacity)
     Animated.timing(
-      fadeAnim,
+      dashoffsetAnimation,
       {
-        toValue: props.opacity,
+        toValue: props.value==="traditional"?pathLength:0,
         duration: 1000,
       }
     ).start();
-  }, [props])
+  }, [props.value])
+
 
   return (
-    <Svg height="400" width="400">
-      <AnimatedRect
-        x={0}
-        y={0}
-        width={100}
-        height={100}
-        fill={fadeAnim.interpolate({
-          inputRange: [0,1],
-          outputRange: ["red","blue"]
-        })}
-        // opacity={fadeAnim}
-      />
-    </Svg>
+    <AnimatedPath
+      clipPath="url(#test)"
+      fill="none"
+      d={animationStrokePath}
+      stroke="green"
+      strokeLinecap="round"
+      strokeLinejoin="miter"
+      strokeWidth={STROKE_WIDTH}
+      strokeDasharray={pathLength + "," + pathLength}
+      strokeDashoffset={dashoffsetAnimation}
+    />
   );
 }
