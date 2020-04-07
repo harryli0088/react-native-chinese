@@ -3,13 +3,15 @@ import * as React from 'react';
 import { Button, Image, Platform, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import loadLocalResource from 'react-native-local-resource';
-import { MonoText } from '../components/StyledText';
-import TabBarIcon from '../components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
-import { withSettings } from "../components/Settings/Settings"
+import { MonoText } from 'components/StyledText';
+import TabBarIcon from 'components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
+import { withSettings } from "components/Settings/Settings"
 import  { PanGestureHandler } from 'react-native-gesture-handler'
-import  AnimatedPathFill from '../components/AnimatedElement/AnimatedPathFill'
+import  AnimatedPathFill from 'components/AnimatedElement/AnimatedPathFill'
+import  Stroke from 'components/Stroke/Stroke'
 import * as curveMatcher from 'curve-matcher'
 import * as d3 from 'd3'
+import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
 
 import dictionary from '../data/chineseOutput.txt'
 import strokes from '../data/strokesOutput.txt'
@@ -169,12 +171,7 @@ class DrawScreen extends React.Component {
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
         if(this.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
           const scale = this.getStrokesScale()
-          const mediansTransformed = this.strokes[currentCharacter].medians[strokeIndex].map(m => //convert the array of medians for the stroke from [x,y] array format into {x:x, y:y} key-value format
-            ({
-              x: scale*m[0], //scale the coordinates
-              y: scale*m[1] //scale the coordinates
-            })
-          )
+          const mediansTransformed = transformArrayToObjectFormat(this.strokes[currentCharacter].medians[strokeIndex], scale)
 
           const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, { restrictRotationAngle: RESTRICT_ROTATION_ANGLE }) //compare the similarity
           const startDistance = Math.hypot( //calculate the distance between the start point and the start median
@@ -254,17 +251,27 @@ class DrawScreen extends React.Component {
         return ( //render via the stroke paths
           <G transform={"scale("+scale+","+scale+")"}>
             {this.strokes[currentCharacter].strokes.map((d,i) =>
-              <AnimatedPathFill
+              <Stroke
                 key={i}
-                d={d}
-                filled={colorScale(i)}
-                show={this.state.userStrokes.length > i}
-                duration={500}
-                stroke={colorScale(i)}
-                strokeWidth={4}
-              />
 
+                color={colorScale(i)}
+                d={d}
+                duration={500}
+                id={i.toString()}
+                isFilled={this.state.userStrokes.length > i}
+                medians={this.strokes[currentCharacter].medians[i]}
+              />
             )}
+
+            {/* <AnimatedPathFill
+              key={i}
+              d={d}
+              filled={colorScale(i)}
+              show={this.state.userStrokes.length > i}
+              duration={500}
+              stroke={colorScale(i)}
+              strokeWidth={4}
+            /> */}
 
             {/* <Path //render stroke
               key={i}

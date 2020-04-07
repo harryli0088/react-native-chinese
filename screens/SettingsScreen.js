@@ -2,10 +2,10 @@ import * as React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 // import { ToggleButton } from 'react-native-paper';
-import ToggleButtons from '../components/ToggleButtons/ToggleButtons';
-import { withSettings } from "../components/Settings/Settings"
-import getLength from "../functions/getLength"
-import { extendStart, getPathString } from "../functions/geometry"
+import ToggleButtons from 'components/ToggleButtons/ToggleButtons';
+import { withSettings } from "components/Settings/Settings"
+import getLength from "functions/getLength"
+import { extendStart, getPathString } from "functions/geometry"
 
 
 import Svg, {
