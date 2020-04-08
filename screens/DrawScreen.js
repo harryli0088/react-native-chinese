@@ -218,30 +218,6 @@ class DrawScreen extends React.Component {
     return null //else return nothing
   }
 
-  renderGuideDots = (currentCharacter) => {
-    if(
-      this.state.showGuideDots && //if we want to show the guide dots
-      this.strokes[currentCharacter] && //if we have the strokes for this character
-      this.strokes[currentCharacter].medians && //if we have the medians for this character
-      this.strokes[currentCharacter].medians[this.state.userStrokes.length] //if the median is valid
-    ) {
-      const medians = this.strokes[currentCharacter].medians[this.state.userStrokes.length] //get the medians for this stroke
-      return medians.map((d,i) => {
-        if(i===0 || i===medians.length-1) { //if this is the first or last median
-          return (
-            <Circle //render median
-              key={i}
-              cx={d[0]}
-              cy={d[1]}
-              r={10}
-              stroke={i===0 ? "#00FF66" : "#FF0033"}
-              strokeWidth={5}
-            />
-          )
-        }
-      })
-    }
-  }
 
   renderCurrentCharacter = currentCharacter => {
     if(currentCharacter) { //if this character is valid
@@ -260,6 +236,7 @@ class DrawScreen extends React.Component {
                 id={i.toString()}
                 isFilled={this.state.userStrokes.length > i}
                 medians={this.strokes[currentCharacter].medians[i]}
+                showGuideDots={this.state.showGuideDots && this.state.userStrokes.length===i}
               />
             )}
 
@@ -281,8 +258,6 @@ class DrawScreen extends React.Component {
               strokeWidth={4}
               style={{transition: "1s"}}
             /> */}
-
-            {this.renderGuideDots(currentCharacter)}
           </G>
         )
       }

@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Animated } from 'react-native';
-import { Path, Defs, ClipPath } from 'react-native-svg';
+import { G, Circle, Path, Defs, ClipPath } from 'react-native-svg';
 import getLength from "functions/getLength"
 import { extendStart, getPathString } from "functions/geometry"
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
@@ -107,12 +107,33 @@ class Stroke extends React.Component {
       />
     )
 
+    const guideDots = this.props.showGuideDots ? (
+      <G>
+        <Circle //first dot
+          cx={mediansTransformed[0].x}
+          cy={mediansTransformed[0].y}
+          r={10}
+          stroke="#00FF66" //green
+          strokeWidth={5}
+        />
+
+        <Circle //last dot
+          cx={mediansTransformed[mediansTransformed.length-1].x}
+          cy={mediansTransformed[mediansTransformed.length-1].y}
+          r={10}
+          stroke="#FF0033" //red
+          strokeWidth={5}
+        />
+      </G>
+    ) : null
+
 
     return (
       <React.Fragment>
         {clip}
         {outline}
         {fill}
+        {guideDots}
       </React.Fragment>
     );
   }
@@ -125,6 +146,7 @@ Stroke.propTypes = {
   id: PropTypes.string.isRequired,
   isFilled: PropTypes.bool.isRequired,
   medians: PropTypes.array.isRequired,
+  showGuideDots: PropTypes.bool.isRequired,
   //showOutline: PropTypes.bool.isRequired,
 }
 
