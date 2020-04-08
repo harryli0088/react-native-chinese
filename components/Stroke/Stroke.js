@@ -14,7 +14,7 @@ const calculateInfo = memoizeOne(
   (medians) => {
     const mediansTransformed = transformArrayToObjectFormat(medians)
     const length = getLength(mediansTransformed)
-    const pathLength = length + STROKE_WIDTH/2
+    const pathLength = length + STROKE_WIDTH/2 + 10
     const extendedMaskPoints = extendStart(mediansTransformed, STROKE_WIDTH / 2);
     const animationStrokePath = getPathString(extendedMaskPoints)
 
@@ -37,13 +37,13 @@ const Stroke = (props) => {
     pathLength
   } = calculateInfo(props.medians)
 
-  const [dashoffsetAnimation] = React.useState(new Animated.Value(props.isFilled?0:pathLength))
+  const [dashoffsetAnimation] = React.useState(new Animated.Value(props.isFilled?0:(pathLength)))
 
   React.useEffect(() => {
     Animated.timing(
       dashoffsetAnimation,
       {
-        toValue: props.isFilled?0:pathLength,
+        toValue: props.isFilled?0:(pathLength),
         duration: props.duration,
       }
     ).start();
