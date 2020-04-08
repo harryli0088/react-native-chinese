@@ -19,47 +19,52 @@ class Stroke extends React.Component {
     } = this.calculateInfo(props.medians)
 
     this.state = {
-      dashoffsetAnimation: new Animated.Value(props.isFilled?0:(pathLength))
+      dashoffsetAnimation: new Animated.Value(0) //initialize fully drawn
     }
   }
 
   calculateInfo = memoizeOne(
-    (medians) => {
-      console.log("I run")
-      const mediansTransformed = transformArrayToObjectFormat(medians)
-      const pathLength = getLength(mediansTransformed) + STROKE_WIDTH/2 + 10
-      const extendedMaskPoints = extendStart(mediansTransformed, STROKE_WIDTH / 2);
-      const animationStrokePath = getPathString(extendedMaskPoints)
+    (medians) => { //memoize this so we only need to do this when a stroke loads
+      const mediansTransformed = transformArrayToObjectFormat(medians) //transform the medians from array to object format
+      const pathLength = getLength(mediansTransformed) + STROKE_WIDTH/2 + 10 //get the path length then add some constants
+      const extendedMaskPoints = extendStart(mediansTransformed, STROKE_WIDTH / 2); //extend the points so the animation fills the clip path
+      const animationStrokePath = getPathString(extendedMaskPoints) //get the path string based on the extended points
 
       return {
         animationStrokePath,
-        extendedMaskPoints,
         mediansTransformed,
         pathLength
       }
     }
   )
 
-  componentDidUpdate(prevProps) {
-    if(prevProps.isFilled !== this.props.isFilled) {
-      const {
-        pathLength
-      } = this.calculateInfo(this.props.medians)
+  animate = () => {
+    const {
+      pathLength
+    } = this.calculateInfo(this.props.medians)
 
-      Animated.timing(
-        this.state.dashoffsetAnimation,
-        {
-          toValue: this.props.isFilled?0:(pathLength),
-          duration: this.props.duration,
-        }
-      ).start();
+    Animated.timing(
+      this.state.dashoffsetAnimation, //animate the state animation value
+      {
+        toValue: this.props.isFilled?0:pathLength,
+        duration: this.props.duration,
+      }
+    ).start()
+  }
+
+  componentDidMount() {
+    this.animate() //animate on mount (so all strokes start fileld in then animate out)
+  }
+
+  componentDidUpdate(prevProps) {
+    if(prevProps.isFilled !== this.props.isFilled) { //if the filled status is different
+      this.animate() //animate
     }
   }
 
   render() {
     const {
       animationStrokePath,
-      extendedMaskPoints,
       mediansTransformed,
       pathLength
     } = this.calculateInfo(this.props.medians)
