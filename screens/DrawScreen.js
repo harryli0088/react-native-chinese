@@ -1,25 +1,17 @@
 import * as React from 'react';
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
-import loadLocalResource from 'react-native-local-resource';
 import { withSettings } from "components/Settings/Settings"
-import  { PanGestureHandler } from 'react-native-gesture-handler'
-import  Stroke from 'components/Stroke/Stroke'
-import  Character from 'components/Character/Character'
+import { PanGestureHandler } from 'react-native-gesture-handler'
+import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
+import Stroke from 'components/Stroke/Stroke'
+import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
-
+import loadLocalResource from 'react-native-local-resource';
 import dictionary from '../data/chineseOutput.txt'
 import strokes from '../data/strokesOutput.txt'
 import dimensions from "../constants/Layout"
 
-import Svg, {
-  Circle,
-  G,
-  Path,
-  Rect,
-} from 'react-native-svg';
-
-const STROKE_WIDTH = 3
 
 const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
@@ -29,6 +21,7 @@ const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
+const STROKE_WIDTH = 3
 const RESTRICT_ROTATION_ANGLE = 0.1 * Math.PI
 const SIMILARITY_THRESHOLD = 0.8
 const DISTANCE_THRESHOLD = 0.10
@@ -38,15 +31,13 @@ class DrawScreen extends React.Component {
     super(props)
 
     this.state = {
-      status:"loading",
-      userStrokes: [], //2d array of validated strokes
-      inputStroke: [], //array of points for the stroke the user is currently entering
-      strokeErrors: 0, //the number of times the user has messed up this stroke
-
-      setIndex: -1, //the index in the dictionary.parsed that we are looking at
       characterIndex: 0, //the character in the set we are looking at
-
+      inputStroke: [], //array of points for the stroke the user is currently entering
+      setIndex: -1, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
+      status:"loading",
+      strokeErrors: 0, //the number of times the user has messed up this stroke
+      userStrokes: [], //2d array of validated strokes
     }
 
     this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
