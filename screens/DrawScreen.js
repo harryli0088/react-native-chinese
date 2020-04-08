@@ -1,16 +1,11 @@
-import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Button, Image, Platform, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { Button, Platform, StyleSheet, View, Text } from 'react-native';
 import loadLocalResource from 'react-native-local-resource';
-import { MonoText } from 'components/StyledText';
-import TabBarIcon from 'components/TabBarIcon'; //<TabBarIcon focused={focused} name="md-book"/>
 import { withSettings } from "components/Settings/Settings"
 import  { PanGestureHandler } from 'react-native-gesture-handler'
-import  AnimatedPathFill from 'components/AnimatedElement/AnimatedPathFill'
 import  Stroke from 'components/Stroke/Stroke'
+import  Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
-import * as d3 from 'd3'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
 
 import dictionary from '../data/chineseOutput.txt'
@@ -21,10 +16,7 @@ import Svg, {
   Circle,
   G,
   Path,
-  Line,
   Rect,
-  Text as SvgText,
-  ForeignObject,
 } from 'react-native-svg';
 
 const STROKE_WIDTH = 3
@@ -221,68 +213,15 @@ class DrawScreen extends React.Component {
 
   renderCurrentCharacter = currentCharacter => {
     if(currentCharacter) { //if this character is valid
-      if(this.strokes[currentCharacter]) { //if there are strokes for this character
-        const scale = this.getStrokesScale()
-        const colorScale = d3.scaleLinear().domain([0, this.strokes[currentCharacter].strokes.length]).range(["red", "blue"])
-        return ( //render via the stroke paths
-          <G transform={"scale("+scale+","+scale+")"}>
-            {this.strokes[currentCharacter].strokes.map((d,i) =>
-              <Stroke
-                key={i}
-
-                color={colorScale(i)}
-                d={d}
-                duration={500}
-                id={i.toString()}
-                isFilled={this.state.userStrokes.length > i}
-                medians={this.strokes[currentCharacter].medians[i]}
-                showGuideDots={this.state.showGuideDots && this.state.userStrokes.length===i}
-              />
-            )}
-
-            {/* <AnimatedPathFill
-              key={i}
-              d={d}
-              filled={colorScale(i)}
-              show={this.state.userStrokes.length > i}
-              duration={500}
-              stroke={colorScale(i)}
-              strokeWidth={4}
-            /> */}
-
-            {/* <Path //render stroke
-              key={i}
-              d={d}
-              fill={this.state.userStrokes.length>i ? colorScale(i) : "transparent"}
-              stroke={colorScale(i)}
-              strokeWidth={4}
-              style={{transition: "1s"}}
-            /> */}
-          </G>
-        )
-      }
-
-      return ( //else we do not have the strokes for this character, render via text
-        <SvgText
-          x={dimensions.window.width/2}
-          y={dimensions.window.width/2}
-          dy="30%"
-          textAnchor="middle"
-          fill="#777"
-          fontSize={0.8*dimensions.window.width}
-          // style={{fontFamily:"space-mono"}}
-          >
-          {currentCharacter}
-        </SvgText>
-        // <ForeignObject
-        //   key={this.state.characterIndex} //keep this here to make sure the text rerenders
-        //   x={0.1*dimensions.window.width}
-        //   y={0.1*dimensions.window.width}
-        //   width={dimensions.window.width}
-        //   height={dimensions.window.width}
-        //   >
-        //   <Text style={{fontFamily:"wts11", color:"#777", fontSize:(0.8*dimensions.window.width)}}>{currentCharacter}</Text>
-        // </ForeignObject>
+      return (
+        <Character
+          character={currentCharacter}
+          currentStroke={this.state.userStrokes.length}
+          scale={this.getStrokesScale()}
+          showGuideDots={this.state.showGuideDots}
+          strokesData={this.strokes[currentCharacter]}
+          width={dimensions.window.width}
+        />
       )
     }
 
