@@ -10,86 +10,107 @@ import memoizeOne from 'memoize-one'
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const STROKE_WIDTH = 200;
 
-const calculateInfo = memoizeOne(
-  (medians) => {
-    const mediansTransformed = transformArrayToObjectFormat(medians)
-    const length = getLength(mediansTransformed)
-    const pathLength = length + STROKE_WIDTH/2 + 10
-    const extendedMaskPoints = extendStart(mediansTransformed, STROKE_WIDTH / 2);
-    const animationStrokePath = getPathString(extendedMaskPoints)
+class Stroke extends React.Component {
+  constructor(props) {
+    super(props)
 
-    return {
-      animationStrokePath,
-      extendedMaskPoints,
-      length,
-      mediansTransformed,
+    const {
       pathLength
+    } = this.calculateInfo(props.medians)
+
+    this.state = {
+      dashoffsetAnimation: new Animated.Value(props.isFilled?0:(pathLength))
     }
   }
-)
 
-const Stroke = (props) => {
-  const {
-    animationStrokePath,
-    extendedMaskPoints,
-    length,
-    mediansTransformed,
-    pathLength
-  } = calculateInfo(props.medians)
+  calculateInfo = memoizeOne(
+    (medians) => {
+      console.log("I run")
+      const mediansTransformed = transformArrayToObjectFormat(medians)
+      const pathLength = getLength(mediansTransformed) + STROKE_WIDTH/2 + 10
+      const extendedMaskPoints = extendStart(mediansTransformed, STROKE_WIDTH / 2);
+      const animationStrokePath = getPathString(extendedMaskPoints)
 
-  const [dashoffsetAnimation] = React.useState(new Animated.Value(props.isFilled?0:(pathLength)))
-
-  React.useEffect(() => {
-    Animated.timing(
-      dashoffsetAnimation,
-      {
-        toValue: props.isFilled?0:(pathLength),
-        duration: props.duration,
+      return {
+        animationStrokePath,
+        extendedMaskPoints,
+        mediansTransformed,
+        pathLength
       }
-    ).start();
-  }, [props.isFilled])
-
-
-  const clip = (
-    <Defs>
-      <ClipPath id={props.id}>
-        <Path d={props.d}/>
-      </ClipPath>
-    </Defs>
+    }
   )
 
-  const background = null
+  componentDidUpdate(prevProps) {
+    if(prevProps.isFilled !== this.props.isFilled) {
+      const {
+        pathLength
+      } = this.calculateInfo(this.props.medians)
 
-  const outline = (
-    <Path
-      d={props.d}
-      stroke={props.color}
-      strokeWidth={4}
-    />
-  )
+      Animated.timing(
+        this.state.dashoffsetAnimation,
+        {
+          toValue: this.props.isFilled?0:(pathLength),
+          duration: this.props.duration,
+        }
+      ).start();
+    }
+  }
 
-  const fill = (
-    <AnimatedPath
-      clipPath={"url(#"+props.id+")"}
-      fill="none"
-      d={animationStrokePath}
-      stroke={props.color}
-      strokeLinecap="round"
-      strokeLinejoin="miter"
-      strokeWidth={STROKE_WIDTH}
-      strokeDasharray={pathLength + "," + pathLength}
-      strokeDashoffset={dashoffsetAnimation}
-    />
-  )
+  render() {
+    const {
+      animationStrokePath,
+      extendedMaskPoints,
+      mediansTransformed,
+      pathLength
+    } = this.calculateInfo(this.props.medians)
 
 
-  return (
-    <React.Fragment>
-      {clip}
-      {outline}
-      {fill}
-    </React.Fragment>
-  );
+    const clip = (
+      <Defs>
+        <ClipPath id={this.props.id}>
+          <Path d={this.props.d}/>
+        </ClipPath>
+      </Defs>
+    )
+
+    // const background = (
+    //   <Path
+    //     d={this.props.d}
+    //     fill="#ddd"
+    //   />
+    // )
+
+    const outline = (
+      <Path
+        d={this.props.d}
+        stroke={this.props.color}
+        strokeWidth={4}
+      />
+    )
+
+    const fill = (
+      <AnimatedPath
+        clipPath={"url(#"+this.props.id+")"}
+        fill="none"
+        d={animationStrokePath}
+        stroke={this.props.color}
+        strokeLinecap="round"
+        strokeLinejoin="miter"
+        strokeWidth={STROKE_WIDTH}
+        strokeDasharray={pathLength + "," + pathLength}
+        strokeDashoffset={this.state.dashoffsetAnimation}
+      />
+    )
+
+
+    return (
+      <React.Fragment>
+        {clip}
+        {outline}
+        {fill}
+      </React.Fragment>
+    );
+  }
 }
 
 Stroke.propTypes = {
