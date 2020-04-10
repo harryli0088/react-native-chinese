@@ -57,7 +57,12 @@ class Stroke extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    this.animate() //animate
+    if(
+      prevProps.isFilled!==this.props.isFilled || //if the filled status changed
+      prevProps.medians!==this.props.medians //if the medians data changed
+    ) {
+      this.animate()
+    }
   }
 
   render() {
