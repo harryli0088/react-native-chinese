@@ -32,7 +32,7 @@ class DrawScreen extends React.Component {
     this.state = {
       characterIndex: 0, //the character in the set we are looking at
       inputStroke: [], //array of points for the stroke the user is currently entering
-      setIndex: -1, //the index in the dictionary.parsed that we are looking at
+      setIndex: 100, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
       strokeErrors: 0, //the number of times the user has messed up this stroke
       userStrokes: [], //2d array of validated strokes
@@ -241,7 +241,7 @@ class DrawScreen extends React.Component {
 
 
   render() {
-    if(typeof this.props.dictionary==="object" && typeof this.props.strokes==="object") {
+    if(this.props.dictionary!==null && this.props.strokes!==null) {
       const {
         currentSet,
         chineseSet,

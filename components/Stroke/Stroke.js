@@ -57,9 +57,7 @@ class Stroke extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if(prevProps.isFilled !== this.props.isFilled) { //if the filled status is different
-      this.animate() //animate
-    }
+    this.animate() //animate
   }
 
   render() {
