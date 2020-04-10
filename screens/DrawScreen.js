@@ -1,16 +1,15 @@
 import * as React from 'react';
+import PropTypes from 'prop-types'
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
 import { withSettings } from "components/Settings/Settings"
+import { withDictionary, withStrokes } from "data/Data"
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
-import loadLocalResource from 'react-native-local-resource';
-import dictionary from '../data/chineseOutput.txt'
-import strokes from '../data/strokesOutput.txt'
-import dimensions from "../constants/Layout"
+import dimensions from "constants/Layout"
 
 
 const FIELD_TO_PARSED_INDEX_MAP = {
@@ -35,7 +34,6 @@ class DrawScreen extends React.Component {
       inputStroke: [], //array of points for the stroke the user is currently entering
       setIndex: -1, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
-      status:"loading",
       strokeErrors: 0, //the number of times the user has messed up this stroke
       userStrokes: [], //2d array of validated strokes
     }
@@ -43,37 +41,15 @@ class DrawScreen extends React.Component {
     this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
   }
 
-  componentDidMount() {
-    this.loadDictionary()
-    this.loadStrokes()
-  }
-
-  loadDictionary = async () => {
-    this.dictionary = await loadLocalResource(dictionary).then(content => {
-      return JSON.parse(content);
-    });
-    this.getNewSet()
-    this.setStatus()
-    console.log("LOAD DICTIONARY")
-  }
-
-  loadStrokes = async () => {
-    this.strokes = await loadLocalResource(strokes).then(content => {
-      return JSON.parse(content);
-    });
-    this.setStatus()
-    console.log("LOAD STROKES")
-  }
-
-  setStatus = () => {
-    if(this.dictionary && this.strokes) {
-      this.setState({status: "done"})
+  componentDidUpdate(prevProps) {
+    if(prevProps.dictionary !== this.props.dictionary) { //if the dictionary changed
+      this.getNewSet() //get a new set
     }
   }
 
 
   getNewSet = () => {
-    const newSetIndex = Math.floor(Math.random()*this.dictionary.parsed.length) //generate a random set index
+    const newSetIndex = Math.floor(Math.random()*this.props.dictionary.parsed.length) //generate a random set index
 
     this.setState({
       setIndex: newSetIndex, //set the new set
@@ -83,8 +59,8 @@ class DrawScreen extends React.Component {
   }
 
   getCurrentSet = () => {
-    if(this.dictionary && this.dictionary.parsed && this.dictionary.parsed[this.state.setIndex]) { //if the dictionary exists AND the set index is valid
-      return this.dictionary.parsed[this.state.setIndex] //return the parsed set in the dictionary
+    if(this.props.dictionary && this.props.dictionary.parsed && this.props.dictionary.parsed[this.state.setIndex]) { //if the dictionary exists AND the set index is valid
+      return this.props.dictionary.parsed[this.state.setIndex] //return the parsed set in the dictionary
     }
     return null
   }
@@ -150,11 +126,11 @@ class DrawScreen extends React.Component {
         currentCharacter,
       } = this.getChineseInfo()
 
-      if(this.strokes[currentCharacter]) { //if this character has strokes
+      if(this.props.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
-        if(this.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
+        if(this.props.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
           const scale = this.getStrokesScale()
-          const mediansTransformed = transformArrayToObjectFormat(this.strokes[currentCharacter].medians[strokeIndex], scale)
+          const mediansTransformed = transformArrayToObjectFormat(this.props.strokes[currentCharacter].medians[strokeIndex], scale)
 
           const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, { restrictRotationAngle: RESTRICT_ROTATION_ANGLE }) //compare the similarity
           const startDistance = Math.hypot( //calculate the distance between the start point and the start median
@@ -210,7 +186,7 @@ class DrawScreen extends React.Component {
           currentStroke={this.state.userStrokes.length}
           scale={this.getStrokesScale()}
           showGuideDots={this.state.showGuideDots}
-          strokesData={this.strokes[currentCharacter]}
+          strokesData={this.props.strokes[currentCharacter]}
           width={dimensions.window.width}
         />
       )
@@ -265,7 +241,7 @@ class DrawScreen extends React.Component {
 
 
   render() {
-    if(this.state.status === "done") {
+    if(typeof this.props.dictionary==="object" && typeof this.props.strokes==="object") {
       const {
         currentSet,
         chineseSet,
@@ -340,7 +316,16 @@ DrawScreen.navigationOptions = {
   header: null,
 };
 
-export default withSettings(DrawScreen)
+DrawScreen.propTypes = {
+  dictionary: PropTypes.object,
+  strokes: PropTypes.object,
+};
+
+export default withSettings(
+  withDictionary(
+    withStrokes(DrawScreen)
+  )
+)
 
 
 const styles = StyleSheet.create({
