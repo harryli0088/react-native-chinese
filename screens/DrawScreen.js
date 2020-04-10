@@ -12,7 +12,7 @@ import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat
 import dimensions from "constants/Layout"
 
 
-const FIELD_TO_PARSED_INDEX_MAP = {
+export const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
   simplified: 1,
   pinyinNumber: 2,

@@ -4,22 +4,8 @@ import { ScrollView } from 'react-native-gesture-handler';
 import Fuse from 'fuse.js'
 import { withSettings } from "components/Settings/Settings"
 import { withDictionary } from "data/Data"
-
-const options = {
-  isCaseSensitive: false,
-  findAllMatches: false,
-  includeMatches: false,
-  includeScore: false,
-  useExtendedSearch: false,
-  minMatchCharLength: 1,
-  shouldSort: true,
-  threshold: 0.8,
-  location: 0,
-  distance: 100,
-  keys: [
-    "0","1","2","3","4"
-  ],
-};
+import { FIELD_TO_PARSED_INDEX_MAP } from "screens/DrawScreen"
+import TabBarIcon from 'components/TabBarIcon';
 
 function getRegex(word) {
   const allowedSeparator = '\\\s,;"\'|';
@@ -38,7 +24,7 @@ class DictionaryScreen extends React.Component {
 
     this.state = {
       search: "",
-      results: [],
+      results: [10050],
     }
   }
 
@@ -69,20 +55,24 @@ class DictionaryScreen extends React.Component {
               value={this.state.search}
               placerholder="Search..."
             />
-            <Text
-              style={{position:"absolute", top: "50%", right: 10, transform:[{translateY:-10}]}}
+            <View
+              style={{position:"absolute", top: "50%", right: 10, transform:[{translateY:-15}]}}
               onPress={e => onChangeSearch("")}
             >
-              x
-            </Text>
+              <TabBarIcon name="md-backspace"/>
+            </View>
           </View>
 
           <ScrollView>
             {this.state.results.map((setIndex,i) =>
               <View key={i} style={styles.entry}>
-                <Text>{this.props.dictionary.parsed[setIndex][0]}</Text>
+                <Text style={styles.entryHeading}>
+                  {this.props.dictionary.parsed[setIndex][ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]}
+                  {this.props.dictionary.parsed[setIndex][FIELD_TO_PARSED_INDEX_MAP.pinyinTone]}
+                </Text>
+
                 <View>
-                  {this.props.dictionary.parsed[setIndex][4].map((e,j) =>
+                  {this.props.dictionary.parsed[setIndex][FIELD_TO_PARSED_INDEX_MAP.english].map((e,j) =>
                     <Text key={j}>{e}</Text>
                   )}
                 </View>
@@ -115,5 +105,8 @@ const styles = StyleSheet.create({
     padding: 2,
     borderBottomColor: "gray",
     borderWidth: 1,
+  },
+  entryHeading: {
+    fontSize: 20,
   },
 });
