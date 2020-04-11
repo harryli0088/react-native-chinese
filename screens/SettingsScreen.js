@@ -40,6 +40,7 @@ const SettingsScreen = props => {
           label='Restrict the words to'
           data={characterSetOptions}
           value={props.settings.characterSetRestriction}
+          onChangeText={value => props.setSetting("characterSetRestriction", value)}
         />
       </ScrollView>
     </View>

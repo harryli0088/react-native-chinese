@@ -1,14 +1,15 @@
 import * as React from 'react';
 import PropTypes from 'prop-types'
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
-import { withSettings } from "components/Settings/Settings"
-import { withDictionary, withStrokes } from "data/Data"
+import { withSettings, characterSetRestrictions } from "components/Settings/Settings"
+import { withDictionary, withStrokes, withHsk } from "data/Data"
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
+import getRandomRestrictedSetIndex from "functions/getRandomRestrictedSetIndex"
 import dimensions from "constants/Layout"
 
 
@@ -49,7 +50,10 @@ class DrawScreen extends React.Component {
 
 
   getNewSet = () => {
-    const newSetIndex = Math.floor(Math.random()*this.props.dictionary.parsed.length) //generate a random set index
+    let newSetIndex = Math.floor(Math.random()*this.props.dictionary.parsed.length) //generate a random set index
+
+    const restrictions = characterSetRestrictions[this.props.settings.characterSetRestriction] //get the array of restrictions
+    newSetIndex = getRandomRestrictedSetIndex(restrictions, this.props.hsk, this.props.dictionary.map) || newSetIndex //try to get a set index from the restrictions
 
     this.setState({
       setIndex: newSetIndex, //set the new set
@@ -323,7 +327,9 @@ DrawScreen.propTypes = {
 
 export default withSettings(
   withDictionary(
-    withStrokes(DrawScreen)
+    withStrokes(
+      withHsk(DrawScreen)
+    )
   )
 )
 
