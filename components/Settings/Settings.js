@@ -3,7 +3,7 @@ import { getAsyncStorage, setAsyncStorage } from '../../functions/asyncStorage';
 
 const SettingsContext = React.createContext({settings: {}, setSetting: () => {}});
 
-export const characterSetRestrictions = {
+export const characterTermRestrictions = {
   "Full Dictionary": [],
   "HSK1": ["1"],
   "HSK2 and below": ["1","2"],
@@ -24,7 +24,7 @@ export default class Settings extends React.Component {
 
     this.state = {
       traditionalOrSimplified: "traditional",
-      characterSetRestriction: "Full Dictionary",
+      characterTermRestriction: "Full Dictionary",
     };
   }
 
@@ -35,7 +35,7 @@ export default class Settings extends React.Component {
   getSettingsFromAsyncStorage = async () => {
     this.setState({
       traditionalOrSimplified: await getAsyncStorage('traditionalOrSimplified') === "traditional" ? "traditional" : "simplified",
-      characterSetRestriction: await getAsyncStorage('characterSetRestriction') || this.state.characterSetRestriction,
+      characterTermRestriction: await getAsyncStorage('characterTermRestriction') || this.state.characterTermRestriction,
     })
   }
 

@@ -3,7 +3,7 @@ import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { ScrollView } from 'react-native-gesture-handler';
 // import { ToggleButton } from 'react-native-paper';
 import ToggleButtons from 'components/ToggleButtons/ToggleButtons';
-import { withSettings } from "components/Settings/Settings"
+import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
 import getLength from "functions/getLength"
 import { extendStart, getPathString } from "functions/geometry"
 import { Dropdown } from 'react-native-material-dropdown';
@@ -16,12 +16,10 @@ import Svg, {
   ClipPath,
 } from 'react-native-svg';
 
-import { characterSetRestrictions } from "components/Settings/Settings"
 
-const characterSetOptions = Object.keys(characterSetRestrictions).map(value => ({value}))
+const characterTermOptions = Object.keys(characterTermRestrictions).map(value => ({value}))
 
 const SettingsScreen = props => {
-
   return (
     <View style={styles.container}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -38,9 +36,9 @@ const SettingsScreen = props => {
 
         <Dropdown
           label='Restrict the words to'
-          data={characterSetOptions}
-          value={props.settings.characterSetRestriction}
-          onChangeText={value => props.setSetting("characterSetRestriction", value)}
+          data={characterTermOptions}
+          value={props.settings.characterTermRestriction}
+          onChangeText={value => props.setSetting("characterTermRestriction", value)}
         />
       </ScrollView>
     </View>

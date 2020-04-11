@@ -1,6 +1,6 @@
 import React from 'react'
 import loadLocalResource from 'react-native-local-resource';
-import dictionary from './chineseOutput.txt'
+import dictionary from './dictionary.txt'
 import strokes from './strokesOutput.txt'
 import hsk1Vocab from './hsk/hsk1-vocab.txt'
 import hsk1Characters from './hsk/hsk1-characters.txt'

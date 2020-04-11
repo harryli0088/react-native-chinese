@@ -1,15 +1,15 @@
 import * as React from 'react';
 import PropTypes from 'prop-types'
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
-import { withSettings, characterSetRestrictions } from "components/Settings/Settings"
+import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
 import { withDictionary, withStrokes, withHsk } from "data/Data"
-import { PanGestureHandler } from 'react-native-gesture-handler'
+import { PanGestureHandler, ScrollView } from 'react-native-gesture-handler'
 import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
-import getRandomRestrictedSetIndex from "functions/getRandomRestrictedSetIndex"
+import getRandomRestrictedTermIndex from "functions/getRandomRestrictedTermIndex"
 import dimensions from "constants/Layout"
 
 
@@ -31,50 +31,54 @@ class DrawScreen extends React.Component {
     super(props)
 
     this.state = {
-      characterIndex: 0, //the character in the set we are looking at
+      characterIndex: 0, //the character in the term we are looking at
       inputStroke: [], //array of points for the stroke the user is currently entering
-      setIndex: 100, //the index in the dictionary.parsed that we are looking at
+      termIndex: 10215, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
       strokeErrors: 0, //the number of times the user has messed up this stroke
       userStrokes: [], //2d array of validated strokes
+      source: "",
     }
 
     this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
   }
 
   componentDidUpdate(prevProps) {
-    if(prevProps.dictionary !== this.props.dictionary) { //if the dictionary changed
-      this.getNewSet() //get a new set
+    if(prevProps.dictionary!==this.props.dictionary) { //if the dictionary changed
+      this.getNewTerm() //get a new term
     }
   }
 
 
-  getNewSet = () => {
-    let newSetIndex = Math.floor(Math.random()*this.props.dictionary.parsed.length) //generate a random set index
-
-    const restrictions = characterSetRestrictions[this.props.settings.characterSetRestriction] //get the array of restrictions
-    newSetIndex = getRandomRestrictedSetIndex(restrictions, this.props.hsk, this.props.dictionary.map) || newSetIndex //try to get a set index from the restrictions
+  getNewTerm = () => {
+    console.log("characterTermRestrictions[this.props.settings.characterTermRestriction]",characterTermRestrictions[this.props.settings.characterTermRestriction])
+    const restrictionResults = getRandomRestrictedTermIndex(
+      characterTermRestrictions[this.props.settings.characterTermRestriction], //get the array of restrictions,
+      this.props.hsk,
+      this.props.dictionary.map,
+    )
+    console.log("restrictionResults",restrictionResults)
+    const newTermIndex = restrictionResults.index || Math.floor(Math.random()*this.props.dictionary.parsed.length) //try to get a term index from the restrictions, else generate a random term index
+    const newTitle = restrictionResults.title || "Full Dictionary" //try to get a term index from the restrictions
 
     this.setState({
-      setIndex: newSetIndex, //set the new set
+      termIndex: newTermIndex, //set the new term
       characterIndex: 0, //reset the character index to the beginning
+      source: newTitle,
     })
     this.clearUserStrokes() //clear all of the strokes
   }
 
-  getCurrentSet = () => {
-    if(this.props.dictionary && this.props.dictionary.parsed && this.props.dictionary.parsed[this.state.setIndex]) { //if the dictionary exists AND the set index is valid
-      return this.props.dictionary.parsed[this.state.setIndex] //return the parsed set in the dictionary
-    }
-    return null
+  getCurrentTerm = () => {
+    return (this.props.dictionary?.parsed?.[this.state.termIndex]) //return the parsed term in the dictionary
   }
 
   getNextCharacter = () => {
-    if(this.getCurrentSet().length-1 > this.state.characterIndex) { //if there are more characters remaining in the set
+    if(this.getCurrentTerm()?.[FIELD_TO_PARSED_INDEX_MAP.traditional].length-1 > this.state.characterIndex) { //if there are more characters remaining in the term
       this.setState({characterIndex: this.state.characterIndex+1}) //move to the next character
     }
-    else { //else we are at the end of the set
-      this.getNewSet() //get a new set
+    else { //else we are at the end of the term
+      this.getNewTerm() //get a new term
     }
     this.clearUserStrokes() //clear the strokes
   }
@@ -128,7 +132,7 @@ class DrawScreen extends React.Component {
     else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
       const {
         currentCharacter,
-      } = this.getChineseInfo()
+      } = this.getChineseInfo()[0]
 
       if(this.props.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
@@ -173,9 +177,9 @@ class DrawScreen extends React.Component {
 
   getStrokesScale = () => dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
 
-  getCurrentCharacter = chineseSet => {
-    if(chineseSet.length > this.state.characterIndex) { //if this index is valid
-      return chineseSet[this.state.characterIndex] //return the character
+  getCurrentCharacter = chineseTerm => {
+    if(chineseTerm.length > this.state.characterIndex) { //if this index is valid
+      return chineseTerm[this.state.characterIndex] //return the character
     }
 
     return null //else return nothing
@@ -199,28 +203,31 @@ class DrawScreen extends React.Component {
     return null //else return nothing
   }
 
-  getNextButton = chineseSet => {
-    if(chineseSet.length-1 <= this.state.characterIndex) {
-      return <Button title="Next Set >" onPress={this.getNewSet}/>
+  getNextButton = chineseTerm => {
+    if(chineseTerm.length-1 <= this.state.characterIndex) {
+      return <Button title="Next Term >" onPress={this.getNewTerm}/>
     }
 
     return <Button title="Next Character >" onPress={this.getNextCharacter}/>
   }
 
   getChineseInfo = () => { //get all the info we need for this character
-    const currentSet = this.getCurrentSet()
-    const chineseSet = currentSet[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
-    const pinyin = currentSet[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
-    const english = currentSet[FIELD_TO_PARSED_INDEX_MAP.english]
-    const currentCharacter = this.getCurrentCharacter(chineseSet)
+    const currentTerm = this.getCurrentTerm()
+    const allTerms = this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ] //get all the terms that this term maps to
+    return allTerms.map(termIndex => {
+      const term = this.props.dictionary.parsed[termIndex]
+      const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
+      const pinyin = term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
+      const english = term[FIELD_TO_PARSED_INDEX_MAP.english]
+      const currentCharacter = this.getCurrentCharacter(chineseTerm)
 
-    return {
-      currentSet,
-      chineseSet,
-      pinyin,
-      english,
-      currentCharacter,
-    }
+      return {
+        chineseTerm,
+        pinyin,
+        english,
+        currentCharacter,
+      }
+    })
   }
 
   renderPathFromPoints = (points, index) => {
@@ -246,13 +253,12 @@ class DrawScreen extends React.Component {
 
   render() {
     if(this.props.dictionary!==null && this.props.strokes!==null) {
+      const allTerms = this.getChineseInfo()
       const {
-        currentSet,
-        chineseSet,
-        pinyin,
-        english,
+        currentTerm,
+        chineseTerm,
         currentCharacter,
-      } = this.getChineseInfo()
+      } = allTerms[0]
 
       return (
         <View style={styles.container}>
@@ -277,13 +283,18 @@ class DrawScreen extends React.Component {
             </Svg>
           </PanGestureHandler>
 
-          <View>
-            <Text style={[styles.centeredText, styles.chineseText]}>{chineseSet}</Text>
-            <Text style={[styles.centeredText, styles.chineseText]}>{pinyin}</Text>
-            {english.map((e,i) =>
-              <Text key={i}  style={styles.centeredText}>- {e}</Text>
+          <ScrollView style={styles.definitionsScrollContainer}>
+            <Text style={[styles.centeredText, styles.chineseText]}>{this.state.source}</Text>
+            <Text style={[styles.centeredText, styles.chineseText]}>{chineseTerm}</Text>
+            {allTerms.map((term,i) =>
+              <View key={i}>
+                <Text style={[styles.centeredText, styles.chineseText]}>{term.pinyin}</Text>
+                {term.english.map((e,j) =>
+                  <Text key={j}  style={styles.centeredText}>- {e}</Text>
+                )}
+              </View>
             )}
-          </View>
+          </ScrollView>
 
           <View style={styles.tabBarInfoContainer}>
             <View style={{display:"flex", flexDirection:"row", marginTop:10}}>
@@ -300,7 +311,7 @@ class DrawScreen extends React.Component {
                 />
               </View>
               <View style={{width:"50%"}}>
-                {this.getNextButton(chineseSet)}
+                {this.getNextButton(chineseTerm)}
               </View>
             </View>
           </View>
@@ -317,7 +328,8 @@ class DrawScreen extends React.Component {
 }
 
 DrawScreen.navigationOptions = {
-  header: null,
+  title: "test",
+  headerTitle: "test",
 };
 
 DrawScreen.propTypes = {
@@ -345,6 +357,9 @@ const styles = StyleSheet.create({
   chineseText: {
     fontSize: 20
   },
+  definitionsScrollContainer: {
+    marginBottom: 60
+  },
   tabBarInfoContainer: {
     position: 'absolute',
     bottom: 0,
@@ -361,8 +376,9 @@ const styles = StyleSheet.create({
         elevation: 20,
       },
     }),
+    display: "flex",
     alignItems: 'center',
     backgroundColor: '#fbfbfb',
-    paddingVertical: 5,
+    paddingBottom: 10,
   },
 });
