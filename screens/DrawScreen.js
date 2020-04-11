@@ -131,7 +131,7 @@ class DrawScreen extends React.Component {
     else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
       const {
         currentCharacter,
-      } = this.getChineseInfo(this.getCurrentTerm())[0]
+      } = this.getChineseInfo(this.getCurrentTerm(), this.state.characterIndex)[0]
 
       if(this.props.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
@@ -176,14 +176,6 @@ class DrawScreen extends React.Component {
 
   getStrokesScale = () => dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
 
-  getCurrentCharacter = chineseTerm => {
-    if(chineseTerm.length > this.state.characterIndex) { //if this index is valid
-      return chineseTerm[this.state.characterIndex] //return the character
-    }
-
-    return null //else return nothing
-  }
-
 
   renderCurrentCharacter = currentCharacter => {
     if(currentCharacter) { //if this character is valid
@@ -211,7 +203,7 @@ class DrawScreen extends React.Component {
   }
 
   getChineseInfo = memoizeOne(
-    currentTerm => { //get all the info we need for this character
+    (currentTerm, characterIndex) => { //get all the info we need for this character
       console.log("RUN getChineseInfo")
       const allTerms = this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ] //get all the terms that this term maps to
       return allTerms.map(termIndex => {
@@ -219,7 +211,7 @@ class DrawScreen extends React.Component {
         const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
         const pinyin = term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
         const english = term[FIELD_TO_PARSED_INDEX_MAP.english]
-        const currentCharacter = this.getCurrentCharacter(chineseTerm)
+        const currentCharacter = chineseTerm[characterIndex]
 
         return {
           chineseTerm,
@@ -254,7 +246,7 @@ class DrawScreen extends React.Component {
 
   render() {
     if(this.props.dictionary!==null && this.props.strokes!==null) {
-      const allTerms = this.getChineseInfo(this.getCurrentTerm())
+      const allTerms = this.getChineseInfo(this.getCurrentTerm(), this.state.characterIndex)
       const {
         currentTerm,
         chineseTerm,
