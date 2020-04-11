@@ -1,10 +1,11 @@
 import * as React from 'react';
 import PropTypes from 'prop-types'
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
-import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
-import { withDictionary, withStrokes, withHsk } from "data/Data"
 import { PanGestureHandler, ScrollView } from 'react-native-gesture-handler'
 import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
+import memoizeOne from 'memoize-one'
+import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
+import { withDictionary, withStrokes, withHsk } from "data/Data"
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
@@ -51,13 +52,11 @@ class DrawScreen extends React.Component {
 
 
   getNewTerm = () => {
-    console.log("characterTermRestrictions[this.props.settings.characterTermRestriction]",characterTermRestrictions[this.props.settings.characterTermRestriction])
     const restrictionResults = getRandomRestrictedTermIndex(
       characterTermRestrictions[this.props.settings.characterTermRestriction], //get the array of restrictions,
       this.props.hsk,
       this.props.dictionary.map,
     )
-    console.log("restrictionResults",restrictionResults)
     const newTermIndex = restrictionResults.index || Math.floor(Math.random()*this.props.dictionary.parsed.length) //try to get a term index from the restrictions, else generate a random term index
     const newTitle = restrictionResults.title || "Full Dictionary" //try to get a term index from the restrictions
 
@@ -132,7 +131,7 @@ class DrawScreen extends React.Component {
     else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
       const {
         currentCharacter,
-      } = this.getChineseInfo()[0]
+      } = this.getChineseInfo(this.getCurrentTerm())[0]
 
       if(this.props.strokes[currentCharacter]) { //if this character has strokes
         const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
@@ -211,24 +210,26 @@ class DrawScreen extends React.Component {
     return <Button title="Next Character >" onPress={this.getNextCharacter}/>
   }
 
-  getChineseInfo = () => { //get all the info we need for this character
-    const currentTerm = this.getCurrentTerm()
-    const allTerms = this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ] //get all the terms that this term maps to
-    return allTerms.map(termIndex => {
-      const term = this.props.dictionary.parsed[termIndex]
-      const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
-      const pinyin = term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
-      const english = term[FIELD_TO_PARSED_INDEX_MAP.english]
-      const currentCharacter = this.getCurrentCharacter(chineseTerm)
+  getChineseInfo = memoizeOne(
+    currentTerm => { //get all the info we need for this character
+      console.log("RUN getChineseInfo")
+      const allTerms = this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ] //get all the terms that this term maps to
+      return allTerms.map(termIndex => {
+        const term = this.props.dictionary.parsed[termIndex]
+        const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
+        const pinyin = term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
+        const english = term[FIELD_TO_PARSED_INDEX_MAP.english]
+        const currentCharacter = this.getCurrentCharacter(chineseTerm)
 
-      return {
-        chineseTerm,
-        pinyin,
-        english,
-        currentCharacter,
-      }
-    })
-  }
+        return {
+          chineseTerm,
+          pinyin,
+          english,
+          currentCharacter,
+        }
+      })
+    }
+  )
 
   renderPathFromPoints = (points, index) => {
     if(points.length > 1) {
@@ -253,7 +254,7 @@ class DrawScreen extends React.Component {
 
   render() {
     if(this.props.dictionary!==null && this.props.strokes!==null) {
-      const allTerms = this.getChineseInfo()
+      const allTerms = this.getChineseInfo(this.getCurrentTerm())
       const {
         currentTerm,
         chineseTerm,
