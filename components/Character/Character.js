@@ -56,7 +56,7 @@ Character.propTypes = {
   currentStroke: PropTypes.number.isRequired,
   scale: PropTypes.number.isRequired,
   showGuideDots: PropTypes.bool.isRequired,
-  strokesData: PropTypes.object.isRequired,
+  strokesData: PropTypes.object,
   width: PropTypes.number.isRequired,
 }
 

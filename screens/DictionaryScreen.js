@@ -50,16 +50,24 @@ class DictionaryScreen extends React.Component {
                   })
                 })
                 console.log("results.length",results.length)
-                this.setState({results})
+                this.setState({
+                  results: results,
+                })
               }}
               value={this.state.search}
               placerholder="Search..."
             />
             <View
               style={{position:"absolute", top: "50%", right: 10, transform:[{translateY:-15}]}}
-              onPress={e => onChangeSearch("")}
             >
-              <TabBarIcon name="md-backspace"/>
+              <TouchableOpacity
+                onPress={e => this.setState({
+                  search: "",
+                  results: [],
+                })}
+              >
+                <TabBarIcon name="md-backspace"/>
+              </TouchableOpacity>
             </View>
           </View>
 
