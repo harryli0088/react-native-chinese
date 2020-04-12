@@ -11,6 +11,7 @@ import Character from 'components/Character/Character'
 import * as curveMatcher from 'curve-matcher'
 import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
 import getRandomRestrictedTermIndex from "functions/getRandomRestrictedTermIndex"
+import uniqueMergeArrays from "functions/uniqueMergeArrays"
 import dimensions from "constants/Layout"
 
 
@@ -34,7 +35,7 @@ class DrawScreen extends React.Component {
     this.state = {
       characterIndex: 0, //the character in the term we are looking at
       inputStroke: [], //array of points for the stroke the user is currently entering
-      termIndex: 10215, //the index in the dictionary.parsed that we are looking at
+      termIndex: 67605, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
       strokeErrors: 0, //the number of times the user has messed up this stroke
       userStrokes: [], //2d array of validated strokes
@@ -46,7 +47,7 @@ class DrawScreen extends React.Component {
 
   componentDidUpdate(prevProps) {
     if(prevProps.dictionary!==this.props.dictionary) { //if the dictionary changed
-      this.getNewTerm() //get a new term
+      // this.getNewTerm() //get a new term
     }
   }
 
@@ -204,8 +205,11 @@ class DrawScreen extends React.Component {
 
   getChineseInfo = memoizeOne(
     (currentTerm, characterIndex) => { //get all the info we need for this character
-      console.log("RUN getChineseInfo")
-      const allTerms = this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ] //get all the terms that this term maps to
+      const allTerms = uniqueMergeArrays( //get all the indecies that this term maps to
+        this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.traditional] ], //get all traditional mappings
+        this.props.dictionary.map[ currentTerm[FIELD_TO_PARSED_INDEX_MAP.simplified] ], //get all simplified mappings
+      )
+
       return allTerms.map(termIndex => {
         const term = this.props.dictionary.parsed[termIndex]
         const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
