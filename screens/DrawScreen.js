@@ -23,6 +23,13 @@ export const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
+const INITIAL_STROKE_ERRORS_STATE = {
+  showGuideDots: false,
+  strokeErrors: 0, //the number of times the user has messed up this stroke
+}
+
+const SHOW_GUIDE_DOTS_AFTER_X_ERRORS = 3
+
 class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
@@ -30,29 +37,38 @@ class DrawScreen extends React.Component {
     this.state = {
       characterIndex: 0, //the character in the term we are looking at
       termIndex: 67605, //the index in the dictionary.parsed that we are looking at
-      showGuideDots: false,
-      strokeErrors: 0, //the number of times the user has messed up this stroke
       strokeIndex: 0,
       source: "",
+
+      ...INITIAL_STROKE_ERRORS_STATE,
     }
   }
 
+  clearUserStrokes = () => {}
+
+  undoUserStroke = () => {}
 
   getDrawFunctions = (clear,undo) => { //get the clear and under functions from the Draw component
     this.clearUserStrokes = () => {
       console.log("I RUN")
-      this.setState({strokeIndex: 0})
+      this.setState({
+        strokeIndex: 0,
+        ...INITIAL_STROKE_ERRORS_STATE,
+      })
       clear()
     }
     this.undoUserStroke = () => {
-      this.setState({strokeIndex: this.state.strokeIndex - 1})
+      this.setState({
+        strokeIndex: this.state.strokeIndex - 1,
+        ...INITIAL_STROKE_ERRORS_STATE,
+      })
       undo()
     }
   }
 
   componentDidUpdate(prevProps) {
     if(prevProps.dictionary!==this.props.dictionary) { //if the dictionary changed
-      // this.getNewTerm() //get a new term
+      this.getNewTerm() //get a new term
     }
   }
 
@@ -70,7 +86,6 @@ class DrawScreen extends React.Component {
       termIndex: newTermIndex, //set the new term
       characterIndex: 0, //reset the character index to the beginning
       source: newTitle,
-      strokeIndex: 0, //clear the strokes
     })
 
     this.clearUserStrokes() //clear all of the strokes
@@ -84,7 +99,6 @@ class DrawScreen extends React.Component {
     if(this.getCurrentTerm()?.[FIELD_TO_PARSED_INDEX_MAP.traditional].length-1 > this.state.characterIndex) { //if there are more characters remaining in the term
       this.setState({
         characterIndex: this.state.characterIndex + 1, //move to the next character
-        strokeIndex: 0, //clear the strokes
       })
 
       this.clearUserStrokes() //clear all of the strokes
@@ -94,9 +108,20 @@ class DrawScreen extends React.Component {
     }
   }
 
+  //user successfully drew a stroke
+  addInputStrokeCallback = () => this.setState({
+    strokeIndex: this.state.strokeIndex + 1,
+    ...INITIAL_STROKE_ERRORS_STATE,
+  })
 
+  //user drew and invalid stroke
+  invalidInputStrokeCallback = () => this.setState({
+    strokeErrors: this.state.strokeErrors + 1, //increment the errors count for this stroke
+    showGuideDots: this.state.strokeErrors > SHOW_GUIDE_DOTS_AFTER_X_ERRORS-2 //if the user has made too many errors, show the guide dots
+  })
 
   getStrokesScale = () => dimensions.window.width / 1000 //the strokes are hardcoded at a 1000x1000 container so scale the stroke down to fit our Svg
+
 
 
   renderCurrentCharacter = currentCharacter => {
@@ -174,15 +199,8 @@ class DrawScreen extends React.Component {
             </Svg>
 
             <Draw
-              addInputStrokeCallback={() => this.setState({
-                strokeIndex: this.state.strokeIndex + 1,
-                strokeErrors: 0, //reset the errors count
-                showGuideDots: false, //reset show guide dots
-              })}
-              invalidInputStrokeCallback={() => this.setState({
-                strokeErrors: this.state.strokeErrors + 1, //increment the errors count for this stroke
-                showGuideDots: this.state.strokeErrors > 1 //if the user has made n+2 errors or more, show the guide dots
-              })}
+              addInputStrokeCallback={this.addInputStrokeCallback}
+              invalidInputStrokeCallback={this.invalidInputStrokeCallback}
               medians={this.props.strokes[currentCharacter].medians}
               passUpFunctions={this.getDrawFunctions}
               scale={this.getStrokesScale()}
