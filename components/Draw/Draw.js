@@ -44,7 +44,9 @@ class Draw extends React.Component {
 
   clearInputStroke = () => this.setState({inputStroke: []}) //clear the user input stroke
 
-  clearUserStrokes = () => this.setState({userStrokes: []}) //clear all the strokes
+  clearUserStrokes = () => {
+    this.setState({userStrokes: []}) //clear all the strokes
+  }
 
   undoUserStroke = () => this.setState({userStrokes: this.state.userStrokes.slice(0, this.state.userStrokes.length-1)}) //remove the last stroke in the user strokes array
 

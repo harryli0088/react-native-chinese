@@ -40,6 +40,7 @@ class DrawScreen extends React.Component {
 
   getDrawFunctions = (clear,undo) => { //get the clear and under functions from the Draw component
     this.clearUserStrokes = () => {
+      console.log("I RUN")
       this.setState({strokeIndex: 0})
       clear()
     }
@@ -71,6 +72,7 @@ class DrawScreen extends React.Component {
       source: newTitle,
       strokeIndex: 0, //clear the strokes
     })
+
     this.clearUserStrokes() //clear all of the strokes
   }
 
@@ -84,6 +86,8 @@ class DrawScreen extends React.Component {
         characterIndex: this.state.characterIndex + 1, //move to the next character
         strokeIndex: 0, //clear the strokes
       })
+
+      this.clearUserStrokes() //clear all of the strokes
     }
     else { //else we are at the end of the term
       this.getNewTerm() //get a new term
