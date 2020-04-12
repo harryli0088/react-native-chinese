@@ -1,15 +1,15 @@
 import * as React from 'react';
 import PropTypes from 'prop-types'
 import { Button, Platform, StyleSheet, View, Text } from 'react-native';
-import { PanGestureHandler, ScrollView } from 'react-native-gesture-handler'
-import Svg, { G, Circle, Path, Rect } from 'react-native-svg';
+import { ScrollView } from 'react-native-gesture-handler'
+import Svg, { G, Rect } from 'react-native-svg';
 import memoizeOne from 'memoize-one'
 import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
 import { withDictionary, withStrokes, withHsk } from "data/Data"
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
+import Draw from 'components/Draw/Draw'
 import * as curveMatcher from 'curve-matcher'
-import transformArrayToObjectFormat from "functions/transformArrayToObjectFormat"
 import getRandomRestrictedTermIndex from "functions/getRandomRestrictedTermIndex"
 import uniqueMergeArrays from "functions/uniqueMergeArrays"
 import dimensions from "constants/Layout"
@@ -23,26 +23,30 @@ export const FIELD_TO_PARSED_INDEX_MAP = {
   english: 4
 }
 
-const STROKE_WIDTH = 3
-const RESTRICT_ROTATION_ANGLE = 0.1 * Math.PI
-const SIMILARITY_THRESHOLD = 0.8
-const DISTANCE_THRESHOLD = 0.10
-
 class DrawScreen extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
       characterIndex: 0, //the character in the term we are looking at
-      inputStroke: [], //array of points for the stroke the user is currently entering
       termIndex: 67605, //the index in the dictionary.parsed that we are looking at
       showGuideDots: false,
       strokeErrors: 0, //the number of times the user has messed up this stroke
-      userStrokes: [], //2d array of validated strokes
+      strokeIndex: 0,
       source: "",
     }
+  }
 
-    this.inputStrokeStart = null //this is used to track the start of the stroke. if we don't have this, the gesture starts too late
+
+  getDrawFunctions = (clear,undo) => { //get the clear and under functions from the Draw component
+    this.clearUserStrokes = () => {
+      this.setState({strokeIndex: 0})
+      clear()
+    }
+    this.undoUserStroke = () => {
+      this.setState({strokeIndex: this.state.strokeIndex - 1})
+      undo()
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -65,6 +69,7 @@ class DrawScreen extends React.Component {
       termIndex: newTermIndex, //set the new term
       characterIndex: 0, //reset the character index to the beginning
       source: newTitle,
+      strokeIndex: 0, //clear the strokes
     })
     this.clearUserStrokes() //clear all of the strokes
   }
@@ -75,101 +80,13 @@ class DrawScreen extends React.Component {
 
   getNextCharacter = () => {
     if(this.getCurrentTerm()?.[FIELD_TO_PARSED_INDEX_MAP.traditional].length-1 > this.state.characterIndex) { //if there are more characters remaining in the term
-      this.setState({characterIndex: this.state.characterIndex+1}) //move to the next character
+      this.setState({
+        characterIndex: this.state.characterIndex + 1, //move to the next character
+        strokeIndex: 0, //clear the strokes
+      })
     }
     else { //else we are at the end of the term
       this.getNewTerm() //get a new term
-    }
-    this.clearUserStrokes() //clear the strokes
-  }
-
-  addInputStroke = () => { //push the input stroke into the array of user strokes
-    const inputStrokeCopy = JSON.parse(JSON.stringify(this.state.inputStroke)) //copy the input stroke
-    const userStrokesCopy = JSON.parse(JSON.stringify(this.state.userStrokes)) //copy the user strokes
-    userStrokesCopy.push(inputStrokeCopy) //push the input stroke copy
-    this.setState({
-      userStrokes: userStrokesCopy,
-      strokeErrors: 0, //reset the errors count
-      showGuideDots: false, //reset show guide dots
-    })
-
-    this.clearInputStroke() //clear the input stroke
-  }
-
-  clearInputStroke = () => { //clear the user input stroke
-    this.setState({
-      inputStroke: []
-    })
-  }
-
-  clearUserStrokes = () => this.setState({userStrokes: []}) //clear all the strokes
-
-  undoUserStroke = () => this.setState({userStrokes: this.state.userStrokes.slice(0, this.state.userStrokes.length-1)}) //remove the last stroke in the user strokes array
-
-
-  handlePressIn = e => { //this happens before gesture
-    this.inputStrokeStart = {x:e.nativeEvent.locationX, y:e.nativeEvent.locationY} //record the press position because the gesture events don't record this
-  }
-
-  handleGesture = e => {
-    const inputStrokeCopy = JSON.parse(JSON.stringify(this.state.inputStroke)) //copy the input stroke
-
-    if(this.inputStrokeStart) { //if we need to record the start of the stroke first
-      inputStrokeCopy.push(this.inputStrokeStart)
-    }
-    inputStrokeCopy.push({x:e.nativeEvent.x, y:e.nativeEvent.y}) //push the point the user moved to
-
-    this.setState({
-      inputStroke: inputStrokeCopy
-    })
-
-    this.inputStrokeStart = null //clear the input stroke start
-  }
-
-  onHandlerStateChange = e => {
-    if(e.nativeEvent.oldState===0 && e.nativeEvent.state===2) { //gesture started
-    }
-    else if(e.nativeEvent.oldState===4 && e.nativeEvent.state===5) { //gesture ended
-      const {
-        currentCharacter,
-      } = this.getChineseInfo(this.getCurrentTerm(), this.state.characterIndex)[0]
-
-      if(this.props.strokes[currentCharacter]) { //if this character has strokes
-        const strokeIndex = this.state.userStrokes.length //the index of the stroke the user is currently attempting to write
-        if(this.props.strokes[currentCharacter].medians[strokeIndex]) { //if there is another stroke in this character
-          const scale = this.getStrokesScale()
-          const mediansTransformed = transformArrayToObjectFormat(this.props.strokes[currentCharacter].medians[strokeIndex], scale)
-
-          const similarity = curveMatcher.shapeSimilarity(this.state.inputStroke, mediansTransformed, { restrictRotationAngle: RESTRICT_ROTATION_ANGLE }) //compare the similarity
-          const startDistance = Math.hypot( //calculate the distance between the start point and the start median
-            this.state.inputStroke[0].x - mediansTransformed[0].x,
-            this.state.inputStroke[0].y - mediansTransformed[0].y
-          )
-          const endDistance = Math.hypot( //calculate the distance between the end point and the end median
-            this.state.inputStroke[this.state.inputStroke.length-1].x - mediansTransformed[mediansTransformed.length-1].x,
-            this.state.inputStroke[this.state.inputStroke.length-1].y - mediansTransformed[mediansTransformed.length-1].y
-          )
-          console.log("strokeIndex",strokeIndex,"similarity",similarity,"startDistance",startDistance,"endDistance",endDistance,"strokeErrors",this.state.strokeErrors)
-          if( //if the stroke was similar enough AND distance-wise close enough
-            similarity > SIMILARITY_THRESHOLD &&
-            startDistance < dimensions.window.width*DISTANCE_THRESHOLD &&
-            endDistance < dimensions.window.width*DISTANCE_THRESHOLD
-          ) {
-            this.addInputStroke() //add the input stroke
-          }
-          else { //else the stroke was invalid
-            this.setState({
-              strokeErrors: this.state.strokeErrors + 1, //increment the errors count for this stroke
-              showGuideDots: this.state.strokeErrors > 1 //if the user has made n+2 errors or more, show the guide dots
-            })
-          }
-        }
-      }
-      else { //we don't have strokes to validate
-        this.addInputStroke() //add the input stroke
-      }
-
-      this.clearInputStroke() //clear the stroke
     }
   }
 
@@ -183,7 +100,7 @@ class DrawScreen extends React.Component {
       return (
         <Character
           character={currentCharacter}
-          currentStroke={this.state.userStrokes.length}
+          currentStroke={this.state.strokeIndex}
           scale={this.getStrokesScale()}
           showGuideDots={this.state.showGuideDots}
           strokesData={this.props.strokes[currentCharacter]}
@@ -227,23 +144,6 @@ class DrawScreen extends React.Component {
     }
   )
 
-  renderPathFromPoints = (points, index) => {
-    if(points.length > 1) {
-      return (
-        <Path
-          key={index}
-          d={"M"+points.map(p => p.x+" "+p.y).join("L")}
-          stroke="white"
-          strokeWidth={STROKE_WIDTH}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      )
-    }
-    else if(points.length > 0) {
-      return <Circle key={index} cx={points[0].x} cy={points[0].y} r={STROKE_WIDTH/2} fill="white"/>
-    }
-  }
 
 
 
@@ -259,26 +159,33 @@ class DrawScreen extends React.Component {
 
       return (
         <View style={styles.container}>
-          <PanGestureHandler onGestureEvent={this.handleGesture} onHandlerStateChange={this.onHandlerStateChange}>
-            <Svg width={dimensions.window.width} height={dimensions.window.width}>
+          <View style={{position:"relative"}}>
+            <Svg width={dimensions.window.width} height={dimensions.window.width} style={{position:"absolute", top:0, left:0}}>
               <Rect //this is a dummy background
                 width={dimensions.window.width}
                 height={dimensions.window.width}
                 fill="#666"
               />
               {this.renderCurrentCharacter(currentCharacter)}
-              <G>
-                {this.state.userStrokes.map((array,i) => this.renderPathFromPoints(array, i))}
-                {this.renderPathFromPoints(this.state.inputStroke)}
-              </G>
-              <Rect //this transparent rect handles the on press in event
-                width={dimensions.window.width}
-                height={dimensions.window.width}
-                fill="transparent"
-                onPressIn={this.handlePressIn}
-              />
             </Svg>
-          </PanGestureHandler>
+
+            <Draw
+              addInputStrokeCallback={() => this.setState({
+                strokeIndex: this.state.strokeIndex + 1,
+                strokeErrors: 0, //reset the errors count
+                showGuideDots: false, //reset show guide dots
+              })}
+              invalidInputStrokeCallback={() => this.setState({
+                strokeErrors: this.state.strokeErrors + 1, //increment the errors count for this stroke
+                showGuideDots: this.state.strokeErrors > 1 //if the user has made n+2 errors or more, show the guide dots
+              })}
+              medians={this.props.strokes[currentCharacter].medians}
+              passUpFunctions={this.getDrawFunctions}
+              scale={this.getStrokesScale()}
+              width={dimensions.window.width}
+            />
+          </View>
+
 
           <ScrollView style={styles.definitionsScrollContainer}>
             <Text style={[styles.centeredText, styles.chineseText]}>{this.state.source}</Text>
