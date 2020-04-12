@@ -1,5 +1,10 @@
-export default function uniqueMergeArrays(arr1, arr2) {
-  console.log("arr1, arr2",arr1, arr2)
+/**
+ * Given 2 arrays, returns a single array with only unique elements (duplicate elements are spliced out)
+ * @param  {Array} arr1 first array
+ * @param  {Array} arr2 second array
+ * @return {Array}      unique concat-ed array
+ */
+export default function uniqueMergeArrays(arr1=[], arr2=[]) {
   const concat = arr1.concat(arr2)
   //use a double for loop to remove duplicate elements
   for(let i=0; i<concat.length; ++i) {
@@ -10,6 +15,6 @@ export default function uniqueMergeArrays(arr1, arr2) {
       }
     }
   }
-  console.log("concat",concat)
+
   return concat
 }

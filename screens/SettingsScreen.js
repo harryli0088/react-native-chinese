@@ -1,46 +1,44 @@
 import * as React from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
-// import { ToggleButton } from 'react-native-paper';
-import ToggleButtons from 'components/ToggleButtons/ToggleButtons';
+import { Picker, StyleSheet, Text, View } from 'react-native';
 import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
-import getLength from "functions/getLength"
-import { extendStart, getPathString } from "functions/geometry"
-import { Dropdown } from 'react-native-material-dropdown';
 
-import Svg, {
-  G,
-  Rect,
-  Path,
-  Defs,
-  ClipPath,
-} from 'react-native-svg';
-
-
-const characterTermOptions = Object.keys(characterTermRestrictions).map(value => ({value}))
 
 const SettingsScreen = props => {
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View>
+        <Text>Traditional or Simplified:</Text>
         <View>
-          <ToggleButtons
-            value={props.settings.traditionalOrSimplified}
-            options={[
-              {value:"traditional",text:"Traditional"},
-              {value:"simplified",text:"Simplified"},
-            ]}
-            onPress={(e, option) => props.setSetting("traditionalOrSimplified", option.value)}
-          />
+          <Picker
+            itemStyle={{height: 60}}
+            selectedValue={props.settings.traditionalOrSimplified}
+            onValueChange={(value, index) => props.setSetting("traditionalOrSimplified", value)}
+          >
+            <Picker.Item label="Traditional" value="traditional"/>
+            <Picker.Item label="Simplified" value="simplified"/>
+          </Picker>
         </View>
+      </View>
 
-        <Dropdown
-          label='Restrict the words to'
-          data={characterTermOptions}
-          value={props.settings.characterTermRestriction}
-          onChangeText={value => props.setSetting("characterTermRestriction", value)}
-        />
-      </ScrollView>
+      <View>
+        <Text>Restrict the Terms to:</Text>
+        <Picker
+          itemStyle={{height: 60}}
+          selectedValue={props.settings.characterTermRestriction}
+          onValueChange={(value, index) => props.setSetting("characterTermRestriction", value)}
+        >
+          {Object.keys(characterTermRestrictions).map(value =>
+            <Picker.Item label={value} value={value}/>
+          )}
+        </Picker>
+      </View>
+
+      {/* <Dropdown
+        label='Restrict the words to'
+        data={characterTermOptions}
+        value={props.settings.characterTermRestriction}
+        onChangeText={value => props.setSetting("characterTermRestriction", value)}
+      /> */}
     </View>
   );
 }

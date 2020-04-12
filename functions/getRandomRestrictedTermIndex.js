@@ -1,3 +1,10 @@
+/**
+ * Given an array of HSK level restrictions, try to randomly pick a term
+ * @param  {Array} restrictions  array of HSK levels as strings, ex ["1","2", ...]
+ * @param  {Object} hskData       HSK data object
+ * @param  {Object} dictionaryMap the dictionary.map object
+ * @return {Object}               an object with format {index:Number,title:String} if a term within the restrictions was found, else empty object {}
+ */
 export default function getRandomRestrictedTermIndex(restrictions, hskData, dictionaryMap) {
   if(restrictions.length > 0) { //if there are restrictions
     let count = 0 //tracks the number of terms we can pick from
