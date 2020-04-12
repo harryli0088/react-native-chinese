@@ -100,7 +100,7 @@ class DrawScreen extends React.Component {
       return (
         <Character
           character={currentCharacter}
-          currentStroke={this.state.strokeIndex}
+          currentStrokeIndex={this.state.strokeIndex}
           scale={this.getStrokesScale()}
           showGuideDots={this.state.showGuideDots}
           strokesData={this.props.strokes[currentCharacter]}

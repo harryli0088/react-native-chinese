@@ -26,9 +26,9 @@ class Character extends React.Component {
               d={d}
               duration={500}
               id={i.toString()}
-              isFilled={this.props.currentStroke > i}
+              isFilled={this.props.currentStrokeIndex > i}
               medians={this.props.strokesData.medians[i]}
-              showGuideDots={this.props.showGuideDots && this.props.currentStroke===i}
+              showGuideDots={this.props.showGuideDots && this.props.currentStrokeIndex===i}
             />
           )}
         </G>
@@ -53,7 +53,7 @@ class Character extends React.Component {
 
 Character.propTypes = {
   character: PropTypes.string.isRequired,
-  currentStroke: PropTypes.number.isRequired,
+  currentStrokeIndex: PropTypes.number.isRequired,
   scale: PropTypes.number.isRequired,
   showGuideDots: PropTypes.bool.isRequired,
   strokesData: PropTypes.object,
