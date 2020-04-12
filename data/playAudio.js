@@ -14,25 +14,28 @@ export default async function playAudio(pinyinNumbers) {
   const split = pinyinNumbers.trim().toLowerCase().split(" ") //trim and split the string into an array of strings
 
   for(let i=0; i<split.length; ++i) {
-    await playOnePinyinNumber(split[i])
+    if(split[i].length > 0) { //if there is a pinyin to try to play
+      await playOnePinyinNumber(split[i])
+    }
   }
 }
 
 async function playOnePinyinNumber(pinyinNumber) {
   return new Promise(async function(resolve, reject) {
+    console.log("trying to play", pinyinNumber)
+
     if(soundMap[pinyinNumber]) { //if this sound exists
-      const soundObject = new Audio.Sound();
-      soundObject.setOnPlaybackStatusUpdate(playbackStatus => { //https://docs.expo.io/versions/latest/sdk/av/#example-setonplaybackstatusupdate
+      const playbackObject = new Audio.Sound();
+      playbackObject.setOnPlaybackStatusUpdate(playbackStatus => { //https://docs.expo.io/versions/latest/sdk/av/#example-setonplaybackstatusupdate
         if(playbackStatus.isLoaded) { //if the file is loaded
           if(playbackStatus.didJustFinish && !playbackStatus.isLooping) { //if we just finished AND we are not looping
             resolve() //now resolve the promise
           }
         }
       })
-      console.log("trying to play", pinyinNumber)
-
-      await soundObject.loadAsync(soundMap[pinyinNumber]);
-      await soundObject.playAsync()
+      await playbackObject.loadAsync(soundMap[pinyinNumber]);
+      await playbackObject.setRateAsync(1.5, true, Audio.PitchCorrectionQuality.Medium)
+      await playbackObject.playAsync()
     }
     else {
       throw new Error("The sound for " + pinyinNumber + " does not exist")
