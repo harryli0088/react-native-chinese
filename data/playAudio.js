@@ -1,6 +1,10 @@
 import { Audio } from 'expo-av';
 import soundMap from "./soundMap"
 
+Audio.setAudioModeAsync({
+  playsInSilentModeIOS: true,
+})
+
 /**
  * tries to play pinyin audio
  * @param  {String} pinyinNumbers space separated array of pinyin numbers, ex: "Zhong1 wen2"

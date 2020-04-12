@@ -1,11 +1,12 @@
 import * as React from 'react';
 import PropTypes from 'prop-types'
-import { Button, Platform, StyleSheet, View, Text } from 'react-native';
+import { Button, Platform, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler'
 import Svg, { G, Rect } from 'react-native-svg';
 import memoizeOne from 'memoize-one'
 import { withSettings, characterTermRestrictions } from "components/Settings/Settings"
 import { withDictionary, withStrokes, withHsk } from "data/Data"
+import playAudio from "data/playAudio"
 import Stroke from 'components/Stroke/Stroke'
 import Character from 'components/Character/Character'
 import Draw from 'components/Draw/Draw'
@@ -68,7 +69,7 @@ class DrawScreen extends React.Component {
 
   componentDidUpdate(prevProps) {
     if(prevProps.dictionary!==this.props.dictionary) { //if the dictionary changed
-      this.getNewTerm() //get a new term
+      // this.getNewTerm() //get a new term
     }
   }
 
@@ -159,15 +160,13 @@ class DrawScreen extends React.Component {
       return allTerms.map(termIndex => {
         const term = this.props.dictionary.parsed[termIndex]
         const chineseTerm = term[ FIELD_TO_PARSED_INDEX_MAP[this.props.settings.traditionalOrSimplified] ]
-        const pinyin = term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone]
-        const english = term[FIELD_TO_PARSED_INDEX_MAP.english]
-        const currentCharacter = chineseTerm[characterIndex]
 
         return {
           chineseTerm,
-          pinyin,
-          english,
-          currentCharacter,
+          pinyinNumber: term[FIELD_TO_PARSED_INDEX_MAP.pinyinNumber],
+          pinyinTone: term[FIELD_TO_PARSED_INDEX_MAP.pinyinTone],
+          english: term[FIELD_TO_PARSED_INDEX_MAP.english],
+          currentCharacter: chineseTerm[characterIndex],
         }
       })
     }
@@ -183,8 +182,11 @@ class DrawScreen extends React.Component {
       const {
         currentTerm,
         chineseTerm,
+        pinyinNumber,
         currentCharacter,
       } = allTerms[0]
+
+      console.log("pinyinNumber",pinyinNumber)
 
       return (
         <View style={styles.container}>
@@ -214,7 +216,10 @@ class DrawScreen extends React.Component {
             <Text style={[styles.centeredText, styles.chineseText]}>{chineseTerm}</Text>
             {allTerms.map((term,i) =>
               <View key={i}>
-                <Text style={[styles.centeredText, styles.chineseText]}>{term.pinyin}</Text>
+                <TouchableOpacity onPress={e => playAudio(term.pinyinNumber)}>
+                  <Text style={[styles.centeredText, styles.chineseText]}>{term.pinyinTone}</Text>
+                </TouchableOpacity>
+
                 {term.english.map((e,j) =>
                   <Text key={j}  style={styles.centeredText}>- {e}</Text>
                 )}
