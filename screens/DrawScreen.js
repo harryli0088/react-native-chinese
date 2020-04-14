@@ -14,7 +14,7 @@ import * as curveMatcher from 'curve-matcher'
 import getRandomRestrictedTermIndex from "functions/getRandomRestrictedTermIndex"
 import uniqueMergeArrays from "functions/uniqueMergeArrays"
 import dimensions from "constants/Layout"
-
+import TabBarIcon from 'components/TabBarIcon'
 
 export const FIELD_TO_PARSED_INDEX_MAP = {
   traditional: 0,
@@ -69,7 +69,7 @@ class DrawScreen extends React.Component {
 
   componentDidUpdate(prevProps) {
     if(prevProps.dictionary!==this.props.dictionary) { //if the dictionary changed
-      // this.getNewTerm() //get a new term
+      this.getNewTerm() //get a new term
     }
   }
 
@@ -97,7 +97,7 @@ class DrawScreen extends React.Component {
   }
 
   getNextCharacter = () => {
-    if(this.getCurrentTerm()?.[FIELD_TO_PARSED_INDEX_MAP.traditional].length-1 > this.state.characterIndex) { //if there are more characters remaining in the term
+    if(this.getCurrentTerm()[FIELD_TO_PARSED_INDEX_MAP.traditional].length-1 > this.state.characterIndex) { //if there are more characters remaining in the term
       this.setState({
         characterIndex: this.state.characterIndex + 1, //move to the next character
       })
@@ -142,12 +142,14 @@ class DrawScreen extends React.Component {
     return null //else return nothing
   }
 
-  getNextButton = chineseTerm => {
+  getNextButton = (currentCharacter, chineseTerm) => {
+    const disabled = false //this.state.strokeIndex < this.props.strokes[currentCharacter].strokes.length
+
     if(chineseTerm.length-1 <= this.state.characterIndex) {
-      return <Button title="Next Term >" onPress={this.getNewTerm}/>
+      return <Button title="Next Term >" onPress={this.getNewTerm} disabled={disabled}/>
     }
 
-    return <Button title="Next Character >" onPress={this.getNextCharacter}/>
+    return <Button title="Next Character >" onPress={this.getNextCharacter} disabled={disabled}/>
   }
 
   getChineseInfo = memoizeOne(
@@ -215,9 +217,14 @@ class DrawScreen extends React.Component {
             <Text style={[styles.centeredText, styles.chineseText]}>{this.state.source}</Text>
             <Text style={[styles.centeredText, styles.chineseText]}>{chineseTerm}</Text>
             {allTerms.map((term,i) =>
-              <View key={i}>
+              <View key={i} style={{marginTop: 5}}>
                 <TouchableOpacity onPress={e => playAudio(term.pinyinNumber)}>
-                  <Text style={[styles.centeredText, styles.chineseText]}>{term.pinyinTone}</Text>
+                  <View style={{display:"flex", flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                    <Text style={[styles.centeredText, styles.chineseText]}>{term.pinyinTone}</Text>
+                    <View style={{marginLeft:10}}>
+                      <TabBarIcon name="md-volume-high" size={20} style={{marginBottom:-5}}/>
+                    </View>
+                  </View>
                 </TouchableOpacity>
 
                 {term.english.map((e,j) =>
@@ -242,7 +249,7 @@ class DrawScreen extends React.Component {
                 />
               </View>
               <View style={{width:"50%"}}>
-                {this.getNextButton(chineseTerm)}
+                {this.getNextButton(currentCharacter, chineseTerm)}
               </View>
             </View>
           </View>

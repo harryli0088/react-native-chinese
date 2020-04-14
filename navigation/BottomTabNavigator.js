@@ -1,14 +1,14 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as React from 'react';
 
-import TabBarIcon from 'components/TabBarIcon';
-// import HomeScreen from 'screens/HomeScreen';
-// import LinksScreen from 'screens/LinksScreen';
-import DictionaryScreen from 'screens/DictionaryScreen';
-import DrawScreen from 'screens/DrawScreen';
-import SettingsScreen from 'screens/SettingsScreen';
+import TabBarIcon from 'components/TabBarIcon'
+// import HomeScreen from 'screens/HomeScreen'
+// import LinksScreen from 'screens/LinksScreen'
+import DictionaryScreen from 'screens/DictionaryScreen'
+import DrawScreen from 'screens/DrawScreen'
+import SettingsScreen from 'screens/SettingsScreen'
 
-const BottomTab = createBottomTabNavigator();
+const BottomTab = createBottomTabNavigator()
 const INITIAL_ROUTE_NAME = 'Draw';
 
 export default function BottomTabNavigator({ navigation, route }) {
