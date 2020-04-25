@@ -133,6 +133,7 @@ class DrawScreen extends React.Component {
           currentStrokeIndex={this.state.strokeIndex}
           scale={this.getStrokesScale()}
           showGuideDots={this.state.showGuideDots}
+          strokeErrors={this.state.strokeErrors}
           strokesData={this.props.strokes[currentCharacter]}
           width={dimensions.window.width}
         />

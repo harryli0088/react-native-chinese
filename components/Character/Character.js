@@ -28,6 +28,7 @@ class Character extends React.Component {
               id={i.toString()}
               isFilled={this.props.currentStrokeIndex > i}
               medians={this.props.strokesData.medians[i]}
+              runHintAnimation={this.props.currentStrokeIndex===i ? this.props.strokeErrors : 0} //if this is the current stroke, return the stroke errors, else return zero
               showGuideDots={this.props.showGuideDots && this.props.currentStrokeIndex===i}
             />
           )}
@@ -56,6 +57,7 @@ Character.propTypes = {
   currentStrokeIndex: PropTypes.number.isRequired,
   scale: PropTypes.number.isRequired,
   showGuideDots: PropTypes.bool.isRequired,
+  strokeErrors: PropTypes.number.isRequired,
   strokesData: PropTypes.object,
   width: PropTypes.number.isRequired,
 }

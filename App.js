@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View, Button } from 'react-native';
 import { SplashScreen } from 'expo';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
-import Navigation from 'navigation/Navigation';
+import Navigation, { ToggleDrawButton } from 'navigation/Navigation';
 import useLinking from 'navigation/useLinking';
 import Settings from "components/Settings/Settings"
 import Data from "data/Data"
@@ -57,7 +56,13 @@ export default function App(props) {
             {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
             <NavigationContainer ref={containerRef} initialState={initialNavigationState}>
               <Stack.Navigator>
-                <Stack.Screen name="Root" component={Navigation} />
+                <Stack.Screen
+                  name="Root"
+                  component={Navigation}
+                  options={{
+                    headerLeft: () => <ToggleDrawButton/>,
+                  }}
+                />
               </Stack.Navigator>
             </NavigationContainer>
           </View>

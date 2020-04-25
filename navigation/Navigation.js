@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text } from 'react-native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { View, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
 import TabBarIcon from 'components/TabBarIcon'
 // import HomeScreen from 'screens/HomeScreen'
 // import LinksScreen from 'screens/LinksScreen'
@@ -15,7 +16,9 @@ export default function Navigation({ navigation, route }) {
   // Set the header title on the parent stack navigator depending on the
   // currently active tab. Learn more in the documentation:
   // https://reactnavigation.org/docs/en/screen-options-resolution.html
-  navigation.setOptions({ headerTitle: getHeaderTitle(route) });
+  navigation.setOptions({
+    headerTitle: getHeaderTitle(route),
+  });
 
   return (
     <Drawer.Navigator initialRouteName={INITIAL_ROUTE_NAME}>
@@ -23,8 +26,8 @@ export default function Navigation({ navigation, route }) {
         name="Write"
         component={DrawScreen}
         options={({route}) => ({
-          title: 'Write',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-brush"/>,
+          headerTitle: 'Write',
+          headerLeft: () => <ToggleDrawButton/>,
         })}
       />
 
@@ -32,8 +35,8 @@ export default function Navigation({ navigation, route }) {
         name="Dictionary"
         component={DictionaryScreen}
         options={({route}) => ({
-          title: 'Dictionary',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-book"/>,
+          headerTitle: 'Dictionary',
+          headerLeft: () => <ToggleDrawButton/>,
         })}
       />
 
@@ -41,8 +44,8 @@ export default function Navigation({ navigation, route }) {
         name="Settings"
         component={SettingsScreen}
         options={({route}) => ({
-          title: 'Settings',
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-settings"/>,
+          headerTitle: 'Settings',
+          headerLeft: () => <ToggleDrawButton/>,
         })}
       />
     </Drawer.Navigator>
@@ -52,3 +55,29 @@ export default function Navigation({ navigation, route }) {
 function getHeaderTitle(route) {
   return route.state?.routes[route.state.index]?.name ?? INITIAL_ROUTE_NAME;
 }
+
+
+
+export function ToggleDrawButton() {
+  const navigation = useNavigation();
+  console.log("navigation", navigation, "DrawerActions",DrawerActions)
+  return (
+    <View style={styles.toggleDrawButtonContainer}>
+      <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.toggleDrawButton}>
+        <TabBarIcon name="md-menu"/>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+
+
+const styles = StyleSheet.create({
+  toggleDrawButtonContainer: {
+    paddingLeft: 10,
+  },
+  toggleDrawButton: {
+    textAlign: "center",
+    color: "#000"
+  },
+});

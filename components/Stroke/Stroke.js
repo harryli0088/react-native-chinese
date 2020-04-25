@@ -19,7 +19,8 @@ class Stroke extends React.Component {
     } = this.calculateInfo(props.medians)
 
     this.state = {
-      dashoffsetAnimation: new Animated.Value(0) //initialize fully drawn
+      dashoffsetAnimation: new Animated.Value(0), //initialize fully drawn
+      opacityAnimation: new Animated.Value(1), //initialize fully drawn
     }
   }
 
@@ -38,30 +39,51 @@ class Stroke extends React.Component {
     }
   )
 
-  animate = () => {
-    const {
-      pathLength
-    } = this.calculateInfo(this.props.medians)
-
+  runAnimation = (stateKey, toValue, duration, callback) => {
     Animated.timing(
-      this.state.dashoffsetAnimation, //animate the state animation value
+      stateKey, //animate the state animation value
       {
-        toValue: this.props.isFilled?0:pathLength,
-        duration: this.props.duration,
+        toValue: toValue,
+        duration: duration,
       }
-    ).start()
+    ).start(({finished}) => {
+      callback?.(finished)
+    })
   }
 
   componentDidMount() {
-    this.animate() //animate on mount (so all strokes start fileld in then animate out)
+    this.runAnimation( //animate on mount (so all strokes start filled in then animate out)
+      this.state.dashoffsetAnimation,
+      this.props.isFilled?0:this.calculateInfo(this.props.medians).pathLength,
+      this.props.duration,
+    )
   }
 
   componentDidUpdate(prevProps) {
-    if(
+    if( //if we need to animate filling in the stroke
       prevProps.isFilled!==this.props.isFilled || //if the filled status changed
       prevProps.medians!==this.props.medians //if the medians data changed
     ) {
-      this.animate()
+      this.runAnimation(
+        this.state.dashoffsetAnimation,
+        this.props.isFilled?0:this.calculateInfo(this.props.medians).pathLength,
+        this.props.duration,
+      )
+    }
+    else if( //if we need to animate the hint
+      this.props.runHintAnimation>0 && //if the prop is greater than zero
+      prevProps.runHintAnimation!==this.props.runHintAnimation //if the prop value has changed
+    ) {
+      this.runAnimation(
+        this.state.dashoffsetAnimation,
+        0, //fill the stroke
+        2*this.props.duration/3,
+        () => this.runAnimation( //callback
+          this.state.dashoffsetAnimation, //the unfill it
+          this.calculateInfo(this.props.medians).pathLength,
+          1,
+        ),
+      )
     }
   }
 
@@ -133,10 +155,12 @@ class Stroke extends React.Component {
 
     return (
       <React.Fragment>
-        {clip}
-        {outline}
-        {fill}
-        {guideDots}
+        <G opacity={this.state.opacityAnimation}>
+          {clip}
+          {outline}
+          {fill}
+          {guideDots}
+        </G>
       </React.Fragment>
     );
   }
@@ -149,6 +173,7 @@ Stroke.propTypes = {
   id: PropTypes.string.isRequired,
   isFilled: PropTypes.bool.isRequired,
   medians: PropTypes.array.isRequired,
+  runHintAnimation: PropTypes.number.isRequired,
   showGuideDots: PropTypes.bool.isRequired,
   //showOutline: PropTypes.bool.isRequired,
 }
