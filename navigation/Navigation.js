@@ -1,6 +1,6 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as React from 'react';
-
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { View, Text } from 'react-native';
 import TabBarIcon from 'components/TabBarIcon'
 // import HomeScreen from 'screens/HomeScreen'
 // import LinksScreen from 'screens/LinksScreen'
@@ -8,18 +8,18 @@ import DictionaryScreen from 'screens/DictionaryScreen'
 import DrawScreen from 'screens/DrawScreen'
 import SettingsScreen from 'screens/SettingsScreen'
 
-const BottomTab = createBottomTabNavigator()
+const Drawer = createDrawerNavigator()
 const INITIAL_ROUTE_NAME = 'Draw';
 
-export default function BottomTabNavigator({ navigation, route }) {
+export default function Navigation({ navigation, route }) {
   // Set the header title on the parent stack navigator depending on the
   // currently active tab. Learn more in the documentation:
   // https://reactnavigation.org/docs/en/screen-options-resolution.html
   navigation.setOptions({ headerTitle: getHeaderTitle(route) });
 
   return (
-    <BottomTab.Navigator initialRouteName={INITIAL_ROUTE_NAME}>
-      <BottomTab.Screen
+    <Drawer.Navigator initialRouteName={INITIAL_ROUTE_NAME}>
+      <Drawer.Screen
         name="Write"
         component={DrawScreen}
         options={({route}) => ({
@@ -28,7 +28,7 @@ export default function BottomTabNavigator({ navigation, route }) {
         })}
       />
 
-      <BottomTab.Screen
+      <Drawer.Screen
         name="Dictionary"
         component={DictionaryScreen}
         options={({route}) => ({
@@ -37,7 +37,7 @@ export default function BottomTabNavigator({ navigation, route }) {
         })}
       />
 
-      <BottomTab.Screen
+      <Drawer.Screen
         name="Settings"
         component={SettingsScreen}
         options={({route}) => ({
@@ -45,7 +45,7 @@ export default function BottomTabNavigator({ navigation, route }) {
           tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="md-settings"/>,
         })}
       />
-    </BottomTab.Navigator>
+    </Drawer.Navigator>
   );
 }
 
