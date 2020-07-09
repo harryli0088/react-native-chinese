@@ -6,6 +6,8 @@ CC-CEDICT - https://www.mdbg.net/chinese/dictionary?page=cedict - Chinese Dictio
 curve-matcher - https://www.npmjs.com/package/curve-matcher - Check similarity between strokes and user input
 d3 - https://d3js.org/
 pinyin-tone-convert - https://www.npmjs.com/package/pinyin-tone-convert - Convert pinyin numbers into tones
+- words in each HSK level
+- pinyin audio files
 
 ## Processing Scripts
 https://github.com/harryli0088/chinese-processing-scripts/blob/master/index.js
